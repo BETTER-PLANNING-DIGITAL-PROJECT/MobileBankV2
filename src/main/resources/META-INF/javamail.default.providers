@@ -1,0 +1,5 @@
+protocol=smtp
+mail.transport.protocol=smtp
+type=transport
+class=jakarta.mail.util.StreamProvider
+

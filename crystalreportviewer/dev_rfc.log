@@ -1,0 +1,20 @@
+
+**** Log file opened at 2024-05-24 18:22:22.855447 UTC+02:00 (Romance Standard Time), Encoding UTF-8
+NW RFC Library: SDK variant, Release 750 Patch Level 12
+Compilation date          : Jul  7 2023 22:54:54
+CPIC library              : 753.2023.07.06 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1216
+Current working directory : G:\Clone\InternetBankingBackend\crystalreportviewer
+Program                   : crw64
+Process ID                : 582324
+User                      : PHILF
+Hardware                  : PC with Windows NT 4x AMD64 Level 6 (Mod 69 Step 1)
+Operating_system          : Windows NT 10.0
+Hostname                  : DESKTOP-TOJK7P5
+IP address                : 192.168.1.158
+IPv6 address              : fe80::5530:bd19:dcdb:568b
+Global trace level        : 0
+
+2024-05-24 18:22:22.845251 [582328] >> Info entry
+	Did not find config file G:\Clone\InternetBankingBackend\crystalreportviewer\sapnwrfc.ini.

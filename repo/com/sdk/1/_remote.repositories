@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Sun Jun 23 02:33:50 CEST 2024
+sdk-1.jar>=
+sdk-1.pom>=

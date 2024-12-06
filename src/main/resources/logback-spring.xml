@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Define the common log pattern -->
+    <property name="COMMON_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
+
+    <!-- Console Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${COMMON_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for the whole application -->
+    <appender name="FILE_ALL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/application.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>logs/application.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${COMMON_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File Appender for the specific class -->
+    <appender name="FILE_MY_SPECIFIC_CLASS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/tranzak_api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>logs/tranzak_api.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${COMMON_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    <!-- Logger configuration for the specific class -->
+    <logger name="ibnk.intergrations.Tranzak.TranzakService" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE_MY_SPECIFIC_CLASS" />
+    </logger>
+    <!-- File Appender for the specific class -->
+    <appender name="PAYMENT_MY_SPECIFIC_CLASS" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/gateway_api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>logs/gateway_api.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- keep 30 days' worth of history -->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${COMMON_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+   <!-- Logger configuration for the specific class -->
+    <logger name="ibnk.service.BankingService.PaymentService" level="DEBUG" additivity="false">
+        <appender-ref ref="PAYMENT_MY_SPECIFIC_CLASS" />
+    </logger>
+
+    <!-- Logger configuration for HikariCP metrics -->
+    <logger name="com.zaxxer.hikari" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE_ALL" />
+    </logger>
+
+    <!-- Root Logger -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE_ALL" />
+    </root>
+</configuration>

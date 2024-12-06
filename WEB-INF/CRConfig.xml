@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?><CrystalReportEngine-configuration>
+<!--    <reportlocation>../..</reportlocation>-->
+    <timeout>10</timeout>
+    
+    <ExternalFunctionLibraryClassNames> 
+		<classname> </classname>
+		<classname> </classname>
+    </ExternalFunctionLibraryClassNames>
+    
+<keycode>B6W60-01CS200-000G970-0YA1</keycode>
+<Javaserver-configuration>
+<!--<DataDriverCommon>-->
+<!--	&lt;!&ndash; <JavaDir>C:\Program Files (x86)\Business Objects\j2sdk1.4.2_08\bin</JavaDir> &ndash;&gt;-->
+<!--	<JavaDir>C:\Program Files\Java\jdk-17.0.1\bin</JavaDir>-->
+<!--    <Classpath>C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/crlovmanifest.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/CRLOVExternal.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/CRDBJavaServerCommon.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/CRDBJavaServer.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/CRDBJDBCServer.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/CRDBXMLServer.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/CRDBJavaBeansServer.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/CRDBXMLExternal.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/log4j.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/cecore.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/celib.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/ebus405.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/corbaidl.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/freessl201.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/asn1.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/certj.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/jsafe.jar;C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/external/sslj.jar;"C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/mysql-connector-java-5.1.40-bin.jar";"C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/jtds-1.3.1.jar";"C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/ojdbc7.jar";"C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/mssql-jdbc-7.0.0.jre8.jar";C:\Program Files (x86)\Business Objects\Common\3.5\java/lib/sqlite-jdbc-3.23.1;${CLASSPATH}</Classpath>-->
+<!--	<IORFileLocation>${TEMP}</IORFileLocation>-->
+<!--	<JavaServerTimeout>1800</JavaServerTimeout>-->
+<!--	<JavaServerStartupTimeout>30</JavaServerStartupTimeout>-->
+<!--	<JVMMaxHeap>64000000</JVMMaxHeap>-->
+<!--	<JVMMinHeap>32000000</JVMMinHeap>-->
+<!--	<NumberOfThreads>100</NumberOfThreads>-->
+<!--</DataDriverCommon>-->
+<<<<<<< HEAD
+<JDBC>
+=======
+<!--<JDBC>-->
+>>>>>>> ae11ceccabb22f475921dac81e0ab6f01ea02527
+<!--	<CacheRowSetSize>100</CacheRowSetSize>-->
+<!--	<JDBCURL>jdbc:sqlserver://hitokiri17-pc:1433;databaseName=Membership</JDBCURL>-->
+<!--	<JDBCClassName>com.microsoft.sqlserver.jdbc.SQLServerDriver</JDBCClassName>-->
+<!--	<JDBCUserName>sa</JDBCUserName>-->
+	<!-- ORACLE
+	<JDBCURL>jdbc:oracle:thin:@<server-name>:[port]:<service-name></JDBCURL>
+	<JDBCClassName>oracle.jdbc.driver.OracleDriver</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+	<!-- MYSQL
+	<JDBCURL>jdbc:mysql://<server_name>:[port]/<database_name></JDBCURL>
+	<JDBCClassName>com.mysql.jdbc.Driver</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+	<!-- MS SQL
+	<JDBCURL>jdbc:sqlserver://localhost:1433;databaseName=<database_name></JDBCURL>
+	<JDBCClassName>com.microsoft.sqlserver.jdbc.SQLServerDriver</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+	<!-- MS SQL WITH INSTANCE
+	<JDBCURL>jdbc:sqlserver://[serverName[\instanceName][:portNumber];databaseName=<database_name></JDBCURL>
+	<JDBCClassName>com.microsoft.sqlserver.jdbc.SQLServerDriver</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+	<!-- JTDS
+	<JDBCURL>jdbc:jtds:sqlserver://localhost:1433/<database_name></JDBCURL>
+	<JDBCClassName>net.sourceforge.jtds.jdbc.Driver</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+	<!-- JTDS WITH INSTANCE
+	<JDBCURL>jdbc:jtds:sqlserver://localhost:1433/<database_name>;instance=<INSTANCE></JDBCURL>
+	<JDBCClassName>net.sourceforge.jtds.jdbc.Driver</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+	<!-- SQLITE
+	<JDBCURL>jdbc:sqlite:C:/sqlite/db/sqlite.db</JDBCURL>
+	<JDBCClassName>org.sqlite.JDBC</JDBCClassName>
+	<JDBCUserName>sa</JDBCUserName> -->
+<!--	<JNDIURL></JNDIURL>-->
+<!--	<JNDIConnectionFactory></JNDIConnectionFactory>-->
+<!--	<JNDIInitContext>/</JNDIInitContext>-->
+<!--	<JNDIUserName>weblogic</JNDIUserName>-->
+<!--	<GenericJDBCDriver>-->
+<!--		<Default>-->
+<!--			<ServerType>UNKNOWN</ServerType>-->
+<!--			<QuoteIdentifierOnOff>ON</QuoteIdentifierOnOff>-->
+<!--			<StoredProcType>Standard</StoredProcType>-->
+<!--			<LogonStyle>Standard</LogonStyle>-->
+<!--		</Default>-->
+<!--		<Sybase>-->
+<!--			<ServerType>SYBASE</ServerType>-->
+<!--			<QuoteIdentifierOnOff>OFF</QuoteIdentifierOnOff>-->
+<!--			<DriverClassName>com.sybase.jdbc2.jdbc.SybDriver</DriverClassName>-->
+<!--			<StoredProcType>Standard</StoredProcType>-->
+<!--			<LogonStyle>MySQL</LogonStyle>-->
+<!--		</Sybase>-->
+<!--	</GenericJDBCDriver>-->
+<!--</JDBC>-->
+<!--<XML>-->
+<!--	<CacheRowSetSize>100</CacheRowSetSize>-->
+<!--	<PreReadNBytes>4096</PreReadNBytes>-->
+<!--        <MaxCacheXMLSize>153600</MaxCacheXMLSize>-->
+<!--	<XMLLocalURL></XMLLocalURL>-->
+<!--	<SchemaLocalURL></SchemaLocalURL>-->
+<!--	<XMLHttpURL></XMLHttpURL>-->
+<!--	<SchemaHttpURL></SchemaHttpURL>-->
+<!--</XML>-->
+<!--<JavaBeans>-->
+<!--    <CacheRowSetSize>100</CacheRowSetSize>-->
+<!--	<JavaBeansClassPath></JavaBeansClassPath>-->
+<!--</JavaBeans>	-->
+</Javaserver-configuration>
+</CrystalReportEngine-configuration>

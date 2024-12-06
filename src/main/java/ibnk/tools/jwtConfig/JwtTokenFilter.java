@@ -1,0 +1,120 @@
+package ibnk.tools.jwtConfig;
+
+import ibnk.models.banking.Client;
+import ibnk.models.internet.UserEntity;
+import ibnk.models.internet.client.Subscriptions;
+import ibnk.models.internet.enums.SubscriberStatus;
+import ibnk.repositories.banking.ClientMatriculRepository;
+import ibnk.tools.error.UnauthorizedUserException;
+import ibnk.tools.security.SecuritySubscriptionService;
+import ibnk.tools.security.SecurityUserService;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.util.Optional;
+
+
+@Component
+@RequiredArgsConstructor
+public class JwtTokenFilter  extends OncePerRequestFilter  {
+    private final JwtService jwtService;
+    private final SecurityUserService userService;
+    private final SecuritySubscriptionService subscriptionService;
+    private final ClientMatriculRepository clientMatriculRepository;
+
+    @SneakyThrows
+    @Override
+    protected void doFilterInternal(
+             HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain)  {
+
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String deviceId = getCookieValue(request, "user-device-cookie");
+
+            String jwt;
+
+            if(authHeader == null || !authHeader.startsWith("Bearer ")) {
+                jwt = extractTokenFromQueryParameter(request);
+            } else {
+                jwt = authHeader.substring(7);
+            }
+
+            if (jwt == null || jwt.isEmpty()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            String tokenType = jwtService.getTokenType(jwt);
+
+
+            if ("User".equals(tokenType)) {
+                    String userID = jwtService.extractUserID(jwt);
+                    if (userID == null ) throw new UnauthorizedUserException("unauthorized_credentials");
+                    UserEntity userDetails = userService.loadUserByUuid(userID);
+                    if (!jwtService.isTokenValid(jwt, userDetails)) throw new UnauthorizedUserException("unauthorized_credentials");
+                    authenticateUser(userDetails, request);
+            }
+            else if ("Client".equals(tokenType)) {
+            String clientID = jwtService.extractClientID(jwt);
+            if (clientID == null ) throw new UnauthorizedUserException("unauthorized_credentials");
+            Optional<Subscriptions> userDetails = subscriptionService.loadClientByUuid(clientID);
+            if(userDetails.isEmpty()) throw new UnauthorizedUserException("unauthorized_credentials");
+
+            Client matricul = clientMatriculRepository.findById(userDetails.get().getClientMatricul()).orElseThrow(() -> new UsernameNotFoundException("failed_login"));
+            userDetails.get().setClient(matricul);
+
+//            Optional<UserDevice> userDevice = userDeviceRepository.findUserDeviceByUuidAndSubscriber(deviceId, userDetails.get());
+//            if(userDevice.get().getStatus().equals("AUTHORIZED")) throw new UnauthorizedUserException("authorized_device");
+
+            if(userDetails.get().getStatus().equals(SubscriberStatus.SUSPENDED.name())) throw new UnauthorizedUserException("account_suspended");
+            if(userDetails.get().getStatus().equals(SubscriberStatus.BLOCKED.name())) throw new UnauthorizedUserException("account_blocked");
+            if(userDetails.get().getStatus().equals(SubscriberStatus.PENDING.name())) throw new UnauthorizedUserException("failed_login");
+            if(!userDetails.get().getFirstLogin()) throw new UnauthorizedUserException("failed_login");
+            if(!userDetails.get().getContactVerification()) throw new UnauthorizedUserException("invalid_subscription");
+            if (!jwtService.isTokenValidForClient(jwt, userDetails.get()))  throw new UnauthorizedUserException("unauthorized_credentials");
+            authenticateUser(userDetails.get(), request);
+            }
+            filterChain.doFilter(request, response);
+        } catch (Exception ex) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
+        }
+
+    }
+
+    private void authenticateUser(UserDetails userDetails, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities());
+        authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+    }
+
+    private String getCookieValue(HttpServletRequest request, String cookieName) {
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if (cookieName.equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    private String extractTokenFromQueryParameter(HttpServletRequest request) {
+        return request.getParameter("token");
+    }
+
+}

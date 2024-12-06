@@ -1,0 +1,5 @@
+protocol=smtp
+type=transport
+class=org.eclipse.angus.mail.smtp.SMTPTransport
+vendor=Eclipse Angus
+version=1.0
