@@ -508,7 +508,7 @@ public class TransactionController {
     }
 
     @PostMapping(("billing-option"))
-    public ResponseEntity<Object> BillingOptionVAT(@Valid @RequestBody() BillingListDto json, @AuthenticationPrincipal Subscriptions subscriptions) throws ValidationException, BadRequestException {
+    public ResponseEntity<Object> BillingOptionVAT( @RequestBody() BillingListDto json, @AuthenticationPrincipal Subscriptions subscriptions) throws ValidationException, BadRequestException {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
         String date = simpleDateFormat.format(new Date());

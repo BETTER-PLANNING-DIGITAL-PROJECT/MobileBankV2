@@ -28,8 +28,6 @@ public class BillingListDto {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String Pc_CodeOp;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @NotEmpty
-    @Nonnull
     private Double SvMontant;
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String SvParaTx;
