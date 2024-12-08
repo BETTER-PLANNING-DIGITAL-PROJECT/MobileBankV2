@@ -26,6 +26,7 @@ import ibnk.tools.ResponseHandler;
 import ibnk.tools.error.ResourceNotFoundException;
 import ibnk.tools.error.UnauthorizedUserException;
 import ibnk.tools.error.ValidationException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -144,6 +145,10 @@ public class TransactionController {
     public ResponseEntity<Object> inititateBankTransaction(@RequestBody AccountMvtDto dto, @AuthenticationPrincipal Subscriptions subscriber, @PathVariable String type) throws ResourceNotFoundException, UnauthorizedUserException, ValidationException, SQLException {
         MobilePayment initiatedPayment;
         MobilePayment mobilePayment;
+
+        if (dto.getAmount() <= 0) {
+            throw new ValidationException("Invalid amount provided.");
+        }
 
         AccountEntityDto accountInfo = accountService.findClientAccounts(dto.getAccountId()).stream()
                 .findFirst()
@@ -488,7 +493,6 @@ public class TransactionController {
         return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", transi);
     }
 
-
     @PostMapping("search-payable")
     public ResponseEntity<Object> SearchPayable(@RequestBody SearchDataBillDto bill) {
         ChannelCode channelCode;
@@ -517,12 +521,13 @@ public class TransactionController {
         boolean isDebit;
 
         switch (TypeOperations.valueOf(json.getPc_TypeOp())) {
-            case CANALB, WATERBI, ENEOBI, NECRED, ORCRED, MOMODE, MTNCRE, OMDEPO, OACTRF -> isDebit = true;
+            case CANALB, WATERBI, ENEOBI, NECRED, ORCRED, MOMODE, MTNCRE, OMDEPO, OACTRF ,FEEHIS,FEEBAL-> isDebit = true;
             default -> isDebit = false;
         }
         BillingListDto item = accountService.amountBillingOptionWithVAT(json, isDebit,subscriptions);
         return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", item);
     }
+
 
     @GetMapping(("verify-name/{phoneNumber}"))
     public ResponseEntity<Object> VerifyMobilePhoneNumber(@PathVariable String phoneNumber) throws ValidationException, ResourceNotFoundException, JsonProcessingException, InterruptedException {

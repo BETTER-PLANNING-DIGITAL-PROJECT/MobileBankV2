@@ -16,6 +16,7 @@ import ibnk.tools.TOOLS;
 import ibnk.tools.error.ResourceNotFoundException;
 import ibnk.tools.error.ValidationException;
 import ibnk.tools.response.Tuple;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.beanutils.BeanUtils;
@@ -51,6 +52,7 @@ public class AccountService {
     private SimpleJdbcCall accountTransferCall;
     private SimpleJdbcCall amountBillingOptionWithVAT;
     private SimpleJdbcCall mobileLimit;
+    private SimpleJdbcCall comptabliteMb;
 
     @PostConstruct
     public void init() {
@@ -68,6 +70,8 @@ public class AccountService {
                 .withProcedureName("RetAmountBillingOptionWithVAT");
         this.mobileLimit = new SimpleJdbcCall(bankingJdbcTemplate)
                 .withProcedureName("PS_MOBILE_LIMIT");
+        this.comptabliteMb = new SimpleJdbcCall(bankingJdbcTemplate)
+                .withProcedureName("PS_COMPTABLITE_MBANKING");
 //        IBS_GET_BILLING_WITH_VAT
 
     }
@@ -182,17 +186,25 @@ public class AccountService {
         MapSqlParameterSource in = new MapSqlParameterSource()
                 .addValue("ws_Client", subscription.getClientMatricul())
                 .addValue("ws_Amount", item.getAmount());
-        item.setDate(LocalDate.now().toString());
+//        item.setDate(LocalDate.now().toString());
         Map<String, Object> out = mobileLimit.execute(in);
         AccountMvtDto response = AccountMvtDto.TransferToDao(out);
         if (response.getPc_OutLECT() != 0) throw new ValidationException(response.getPc_OutMSG());
         return response;
     }
+    public AccountMvtDto ServiceCharge(AccountMvtDto item, Subscriptions subscription, HttpServletRequest request) throws  ValidationException {
+        MapSqlParameterSource in = new MapSqlParameterSource()
+                .addValue("Eaccount", subscription.getPrimaryAccount())
+                .addValue("ws_TypeOp", item.getTypeOp())
+                .addValue("Language",request.getLocale().getLanguage());
+//        item.setDate(LocalDate.now().toString());
+        Map<String, Object> out = comptabliteMb.execute(in);
+        AccountMvtDto response = AccountMvtDto.TransferToDao(out);
+        if (response.getPc_OutLECT() != 0) throw new ValidationException(response.getPc_OutMSG());
+        return response;
+    }
 
-    public BillingListDto amountBillingOptionWithVAT(BillingListDto item, boolean isDebit, Subscriptions subscriptions) throws ValidationException, BadRequestException {
-        if (item.getSvMontant() <= 0) {
-            throw new ValidationException("Invalid amount provided.");
-        }
+    public BillingListDto amountBillingOptionWithVAT(BillingListDto item, boolean isDebit, Subscriptions subscriptions) throws ValidationException {
         MapSqlParameterSource in = new MapSqlParameterSource()
                 .addValue("Pd_ServerDate", item.getPd_ServerDate())
                 .addValue("Pc_PrincipAccount", item.getPc_PrincipAccount())

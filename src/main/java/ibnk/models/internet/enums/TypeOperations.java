@@ -11,6 +11,8 @@ public enum TypeOperations {
     ENEOBI,
     WATERBI,
     CANALB,
-    OACTRF
+    OACTRF,
+    FEEHIS,
+    FEEBAL
 }
 

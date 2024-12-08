@@ -25,7 +25,9 @@ import ibnk.tools.TOOLS;
 import ibnk.tools.error.ResourceNotFoundException;
 import ibnk.tools.error.UnauthorizedUserException;
 import ibnk.tools.error.ValidationException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -65,6 +67,17 @@ public class AccountController {
         AccountBalanceDto cus = accountService.findAccountBalancesWithAccount(accountId, subscriber.getClientMatricul());
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", cus);
     }
+
+
+    @PostMapping("service-charge")
+    @InterceptPin
+    public ResponseEntity<Object> ServiceCharge(@RequestBody() AccountMvtDto json, @AuthenticationPrincipal Subscriptions subscriptions, HttpServletRequest request) throws ValidationException, BadRequestException {
+
+      accountService.ServiceCharge(json,subscriptions,request);
+        return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", "Success");
+    }
+
+
 
     @GetMapping("getDetails")
     public ResponseEntity<Object> getAllAccountsDetails(@AuthenticationPrincipal Subscriptions subscriber) {
