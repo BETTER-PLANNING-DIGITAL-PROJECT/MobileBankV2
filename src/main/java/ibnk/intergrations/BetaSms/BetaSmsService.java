@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.concurrent.CompletableFuture;
@@ -44,8 +45,20 @@ public class BetaSmsService {
         JSONObject request = new JSONObject(betaResponse);
         HttpEntity<String> entity = new HttpEntity<String>(request.toString(), headers);
         String url = baserUrl + "/send/sms";
-        ResponseEntity<String> response = betaTemplate.postForEntity(url, entity, String.class);
-        System.out.println(response);
+        try{
+            ResponseEntity<String> response = betaTemplate.postForEntity(url, entity, String.class);
+            System.out.println(response);
+        }catch (HttpStatusCodeException ex) {
+            // Log detailed error
+            System.err.println("HTTP Status: " + ex.getStatusCode());
+            System.err.println("Response Body: " + ex.getResponseBodyAsString());
+            // Handle specific scenarios or rethrow custom exception
+        } catch (Exception ex) {
+            // Log unexpected errors
+            System.err.println("Unexpected Error: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
     return CompletableFuture.completedFuture(true);
 
     }

@@ -25,10 +25,8 @@ import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.enums.OtpEnum;
 import ibnk.models.internet.enums.Status;
 import ibnk.models.rptBanking.RptLogoEntity;
-import ibnk.repositories.banking.InstitutionRepository;
 import ibnk.repositories.rptBanking.RptLogoRepository;
 import ibnk.service.*;
-import ibnk.service.BankingService.AccountService;
 import ibnk.service.BankingService.MobilePaymentService;
 import ibnk.tools.Interceptors.InterceptPin;
 import ibnk.tools.Interceptors.InterceptQuestions;
@@ -57,6 +55,7 @@ import java.nio.file.Files;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static ibnk.webController.client.TransactionController.generateUniqueReference;
@@ -75,6 +74,7 @@ public class ClientAuthController {
     private final InstitutionConfigService institutionConfigService;
     private final MediaService mediaService;
     private final RptLogoRepository rptLogoRepository;
+    private final BetaSmsService betaSmsService;
 
     private final EmailService emailService;
     public String cookieValue = "user-device-cookie";
@@ -119,6 +119,13 @@ public class ClientAuthController {
         RptLogoEntity inst = rptLogoRepository.findAll().stream().findFirst().orElseThrow();
 
         return  inst.getLogo();
+    }
+    @PostMapping("auth/send-betta")
+    public CompletableFuture<Boolean> betttaMessage() throws Exception {
+       var mess=  BetaResponse.builder().message("Test-Betta").destinations("683810038").type("sms").build();
+
+
+        return  betaSmsService.sendSms(mess);
     }
 
     @PostMapping("/auth/authenticate")

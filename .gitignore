@@ -1,3 +1,9 @@
 
 /target
 pom.xml
+
+/logs
+src/main/resources/application-finassdee.properties
+src/main/resources/application-mamoni.properties
+
+src/main/resources/application.properties
