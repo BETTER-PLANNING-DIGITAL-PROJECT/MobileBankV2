@@ -297,7 +297,8 @@ public class AccountService {
                 "VALUES (?,?,?,?,?,?,?,?,?)";
 
         if (beneficiaryDto.getMobile()) {
-            Optional <MobileBeneficiairyEntity> mbfnd = mobileBeneficiaryRepository.findByClientAndBeneficiaryAndTelephoneAndStatus(subscriptions.getClientMatricul(),"mobile",beneficiaryDto.getPhoneNumber(),Status.PENDING.name());
+            Optional <MobileBeneficiairyEntity> mbfnd = mobileBeneficiaryRepository.findByClientAndBeneficiaryAndTelephoneAndStatus(subscriptions.getClientMatricul(),
+            "mobile",beneficiaryDto.getPhoneNumber(),Status.PENDING.name());
             if(mbfnd.isPresent()){
                 beneficiaryDto.setUuid(mbfnd.get().getUuid());
                 return beneficiaryDto;

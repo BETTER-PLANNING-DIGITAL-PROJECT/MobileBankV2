@@ -90,7 +90,7 @@ public class TransactionController {
             AccountTransferDto transi = new AccountTransferDto();
 
             try {
-//            Used  getPaymentGatewaysUuid to get Memo since MobilePayment does not have a column called description
+                //            Used  getPaymentGatewaysUuid to get Memo since MobilePayment does not have a column called description
                 trans.setMemo(initiatedPayment.getPaymentGatewaysUuid());
                 trans.setAmount(initiatedPayment.getMontant());
                 trans.setBeneficiary_account(initiatedPayment.getBenefAccount());
