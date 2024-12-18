@@ -70,7 +70,6 @@ public class AccountController {
 
 
     @PostMapping("service-charge")
-    @InterceptPin
     public ResponseEntity<Object> ServiceCharge(@RequestBody() AccountMvtDto json, @AuthenticationPrincipal Subscriptions subscriptions, HttpServletRequest request) throws ValidationException, BadRequestException {
 
       accountService.ServiceCharge(json,subscriptions,request);
@@ -154,20 +153,20 @@ public class AccountController {
     @PostMapping("account-report")
     public ResponseEntity<Object> ReportgenerateAccountInfo(@RequestBody AccountHistoryDto dao, @AuthenticationPrincipal Subscriptions sub, @RequestParam String mimiType) throws ReportSDKExceptionBase, IOException, ResourceNotFoundException {
 
-//        switch (RangeSelector.valueOf(dao.getRangeSelector())) {
-//            case THIS_MONTH -> {
-//                dao.setOpeningDate(TOOLS.firstDayOfThisMonth());
-//                dao.setClosingDate(LocalDate.now());
-//            }
-//            case PREVIOUS_MONTH -> {
-//                dao.setOpeningDate(TOOLS.firstDayOfPreviousMonth());
-//                dao.setClosingDate(TOOLS.lastDayOfPreviousMonth());
-//            }
-//            case PREVIOUS_QUARTER -> {
-//                dao.setOpeningDate(TOOLS.firstDayOfPreviousQuarterMonth());
-//                dao.setClosingDate(TOOLS.lastDayOfPreviousQuarterMonth());
-//            }
-//        }
+        //        switch (RangeSelector.valueOf(dao.getRangeSelector())) {
+        //            case THIS_MONTH -> {
+        //                dao.setOpeningDate(TOOLS.firstDayOfThisMonth());
+        //                dao.setClosingDate(LocalDate.now());
+        //            }
+        //            case PREVIOUS_MONTH -> {
+        //                dao.setOpeningDate(TOOLS.firstDayOfPreviousMonth());
+        //                dao.setClosingDate(TOOLS.lastDayOfPreviousMonth());
+        //            }
+        //            case PREVIOUS_QUARTER -> {
+        //                dao.setOpeningDate(TOOLS.firstDayOfPreviousQuarterMonth());
+        //                dao.setClosingDate(TOOLS.lastDayOfPreviousQuarterMonth());
+        //            }
+        //        }
         byte[] pdfBytes = null;
         switch (mimiType) {
             case "application/pdf":
@@ -188,7 +187,7 @@ public class AccountController {
     @PostMapping("get-statement")
     @InterceptPin()
     public ResponseEntity<Object> ListAllAccountHistory(@RequestBody AccountHistoryDto dao, @AuthenticationPrincipal Subscriptions subscriber) throws ResourceNotFoundException {
-//        DateTimeFormatter customPattern = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        //        DateTimeFormatter customPattern = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         switch (RangeSelector.valueOf(dao.getRangeSelector())) {
             case THIS_MONTH -> {
                 dao.setOpeningDate(TOOLS.firstDayOfThisMonth());

@@ -3,6 +3,7 @@ package ibnk.tools;
 import ibnk.models.internet.*;
 import ibnk.models.internet.enums.*;
 import ibnk.repositories.internet.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,8 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
     private final TransactionStatusMessageRepository transactionStatusMessageRepository;
 
     private final TermAndConditionRepository termAndConditionRepository;
+    @Value("${betta.sms.sender.id}")
+    String senderId;
 
     public SetupDataLoader(UserRepository userRepository, InstitutionConfigRepository institutionConfigRepository, PasswordEncoder passwordEncoder, TransactionStatusMessageRepository transactionStatusMessageRepository, NotificationTemplateRepository notificationTemplateRepository, TermAndConditionRepository termAndConditionRepository) {
         this.userRepository = userRepository;
@@ -116,7 +119,7 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
                 .emailNoReply("benzeezmokom@gmail.com")
                 .port(465L)
                 .questConfig(QuestionEnum.AUTO)
-                .returnUrl("https://ibanking.iglobalfinance.com/auth/diaspora-deposit-response?i=")
+                .returnUrl("internetbanking.finasddee-creditline.com/auth/diaspora-deposit-response?i=")
                 .maxSecurityQuest(2L)
                 .minSecurityQuest(0L)
                 .verifyQuestNumber(1)
@@ -124,7 +127,8 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
                 .maxVerifyAttempt(6L)
                 .otpMinBeforeExpire(5L)
                 .application(Application.MB.name())
-                .trnasOtp(false)
+                .PayerFeePercentage(0)
+                .trnasOtp(true)
                 .build();
 
        saveInstitutionConfig(institutionConfig2);
@@ -175,8 +179,9 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
         if (smsEvent.isEmpty()) {
             NotificationTemplate newSmsEvent = NotificationTemplate.builder()
                     .eventCode(s)
+                    .subject(senderId)
                     .status("INACTIVE")
-                    .template("")
+                    .template(senderId + "")
                     .notificationType(NotificationChanel.SMS).build();
             notificationTemplateRepository.save(newSmsEvent);
         }

@@ -34,6 +34,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final EmployeeRepository employeeRepository;
     private final Logger LOGGER = LogManager.getLogger(AuthenticationService.class);
+    
     public AuthResponse<Object, Object> authenticate(AuthDto request) throws UnauthorizedUserException {
         LOGGER.info("Enter >> Authentication Function");
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUserLogin(), request.getPassword()));

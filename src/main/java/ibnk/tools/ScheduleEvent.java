@@ -37,8 +37,6 @@ public class ScheduleEvent {
     private final EmailService emailService;
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-    private final PaymentService paymentService;
-    private final MobilePaymentRepository mobilePaymentRepository;
     private final NotificationTemplateRepository notificationTemplateRepository;
     private final SubscriptionRepository subscriptionRepository;
 
@@ -48,7 +46,7 @@ public class ScheduleEvent {
 
     //    2 * 60 * 60 * 1000
 //    900000
-    @Scheduled(fixedRate = 3 * 60 * 1000)
+//    @Scheduled(fixedRate = 3 * 60 * 1000)
     @Transactional
     public void ClientNotificationConfig() throws ResourceNotFoundException, SQLException {
 

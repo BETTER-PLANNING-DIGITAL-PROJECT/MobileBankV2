@@ -7,9 +7,7 @@ import ibnk.dto.NotificationEvent;
 import ibnk.dto.UserDto;
 import ibnk.dto.auth.CustomerVerification;
 import ibnk.intergrations.Tranzak.TranzakService;
-import ibnk.intergrations.Tranzak.requestDtos.InitiateCollection;
 import ibnk.intergrations.Tranzak.requestDtos.PhoneVerification;
-import ibnk.intergrations.Tranzak.responseDtos.InitiateCollectionResponse;
 import ibnk.intergrations.Tranzak.responseDtos.PhoneVerifyResponse;
 import ibnk.models.internet.InstitutionConfig;
 import ibnk.models.internet.OtpEntity;
@@ -21,13 +19,10 @@ import ibnk.service.BankingService.MobilePaymentService;
 import ibnk.service.BankingService.PaymentService;
 import ibnk.service.OtpService;
 import ibnk.tools.Interceptors.InterceptPin;
-import ibnk.tools.Interceptors.InterceptQuestions;
 import ibnk.tools.ResponseHandler;
 import ibnk.tools.error.ResourceNotFoundException;
 import ibnk.tools.error.UnauthorizedUserException;
 import ibnk.tools.error.ValidationException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.json.JSONObject;
@@ -64,28 +59,29 @@ public class TransactionController {
 //    @InterceptQuestions
     @InterceptPin
     @PostMapping("initiate-internal-transfer")
-    public ResponseEntity<Object> makeTransfer(@RequestBody AccountTransferDto dao, @AuthenticationPrincipal Subscriptions subscription) throws UnauthorizedUserException, ResourceNotFoundException, ValidationException {
+    public ResponseEntity<Object> makeTransfer(@RequestBody AccountTransferDto dao, @AuthenticationPrincipal Subscriptions subscription) throws Exception {
         MobilePayment initiatedPayment;
         initiatedPayment = MobilePayment.AccountTransferDtoToMobilePayDeposit(dao, subscription);
         Optional<InstitutionConfig> config = institutionConfigRepository.findByApplication(Application.MB.name());
         if(config.isEmpty()){
             throw new ValidationException("Configure Settings");
         }
+
         if(config.get().isTrnasOtp()){
             initiatedPayment.setStatus("INITIATED");
             mobilePaymentService.insertionMobilePayment(initiatedPayment);
-            List<Object> payload = new ArrayList<>();
-            OtpEntity params = OtpEntity.builder()
-                    .guid(initiatedPayment.getUuid())
-                    .email(subscription.getEmail())
-                    .phoneNumber(subscription.getPhoneNumber())
-                    .role(OtpEnum.VALIDATE_INTERNAL_TRANSACTION)
-                    .transport(subscription.getPreferedNotificationChanel())
-                    .build();
-            payload.add(UserDto.CreateSubscriberClientDto.modelToDao(subscription));
-            payload.add(dao);
-            CustomerVerification verificationObject = otpService.GenerateAndSend(params, payload, subscription);
-            return ResponseHandler.generateResponse(HttpStatus.OK, true, "success", verificationObject);
+                List<Object> payload = new ArrayList<>();
+                OtpEntity params = OtpEntity.builder()
+                        .guid(initiatedPayment.getUuid())
+                        .email(subscription.getEmail())
+                        .phoneNumber(subscription.getPhoneNumber())
+                        .role(OtpEnum.VALIDATE_INTERNAL_TRANSACTION)
+                        .transport(subscription.getPreferedNotificationChanel())
+                        .build();
+                payload.add(UserDto.CreateSubscriberClientDto.modelToDao(subscription));
+                payload.add(dao);
+                CustomerVerification verificationObject = otpService.GenerateAndSend(params, payload, subscription);
+                return ResponseHandler.generateResponse(HttpStatus.OK, true, "success", verificationObject);
 
         }
         else {
@@ -142,9 +138,10 @@ public class TransactionController {
 //    @InterceptQuestions
     @PostMapping("initiate/{type}")
     @InterceptPin
-    public ResponseEntity<Object> inititateBankTransaction(@RequestBody AccountMvtDto dto, @AuthenticationPrincipal Subscriptions subscriber, @PathVariable String type) throws ResourceNotFoundException, UnauthorizedUserException, ValidationException, SQLException {
+    public ResponseEntity<Object> inititateBankTransaction(@RequestBody AccountMvtDto dto, @AuthenticationPrincipal Subscriptions subscriber, @PathVariable String type) throws Exception {
         MobilePayment initiatedPayment;
         MobilePayment mobilePayment;
+        Optional<InstitutionConfig> config = institutionConfigRepository.findByApplication(Application.MB.name());
 
         if (dto.getAmount() <= 0) {
             throw new ValidationException("Invalid amount provided.");
@@ -171,24 +168,26 @@ public class TransactionController {
             }
 
             initiatedPayment = mobilePaymentService.insertionMobilePayment(mobilePayment);
-            OtpEntity params = OtpEntity.builder()
-                    .guid(initiatedPayment.getUuid())
-                    .email(subscriber.getEmail())
-                    .phoneNumber(subscriber.getPhoneNumber())
-                    .role(OtpEnum.VALIDATE_TRANSACTION)
-                    .transport(subscriber.getPreferedNotificationChanel())
-                    .build();
+            if(config.get().isTrnasOtp()) {
+                OtpEntity params = OtpEntity.builder()
+                        .guid(initiatedPayment.getUuid())
+                        .email(subscriber.getEmail())
+                        .phoneNumber(subscriber.getPhoneNumber())
+                        .role(OtpEnum.VALIDATE_TRANSACTION)
+                        .transport(subscriber.getPreferedNotificationChanel())
+                        .build();
 
-            initiatedPayment.setName(accountInfo.getClientName());
-            initiatedPayment.setAccountType(accountInfo.getAccountName());
+                initiatedPayment.setName(accountInfo.getClientName());
+                initiatedPayment.setAccountType(accountInfo.getAccountName());
 
-            List<Object> payloads = new ArrayList<>();
-            payloads.add(initiatedPayment);
-            payloads.add(UserDto.CreateSubscriberClientDto.modelToDao(subscriber));
-            CustomerVerification verificationObject = otpService.GenerateAndSend(params, payloads, subscriber);
+                List<Object> payloads = new ArrayList<>();
+                payloads.add(initiatedPayment);
+                payloads.add(UserDto.CreateSubscriberClientDto.modelToDao(subscriber));
+                CustomerVerification verificationObject = otpService.GenerateAndSend(params, payloads, subscriber);
 
-            return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", verificationObject);
-
+                return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", verificationObject);
+            }
+            return validatedInitiatedOperation(subscriber,initiatedPayment.getUuid());
         }
         else if (type.equals("deposit")) {
 
@@ -202,11 +201,13 @@ public class TransactionController {
                     throw new ResourceNotFoundException("INVALID  OPERATION TYPE");
                 }
             }
-            InitPayment initPayment = InitPayment.AccountMvnToInitPay(initiatedPayment, subscriber);
+            InitPayment initPayment = InitPayment.AccountMvnToInitPayMamoni(initiatedPayment, subscriber);
 
             initPayment.setType(PaymentType.cash_collect);
             initPayment.setChannel(channelCode);
             initPayment.setReference(initiatedPayment.getUuid());
+
+//            initPayment.getExtra().setPayerFeePercentage(0L);
 
             PaymentDto result = paymentService.initiatePayment(initPayment);
             initiatedPayment.setStatus("PENDING");
@@ -322,6 +323,9 @@ public class TransactionController {
 
 
     public ResponseEntity<Object> validatedInitiatedOperation(Subscriptions subscriber, String operationUuid) throws Exception {
+
+        Optional<InstitutionConfig> config = institutionConfigRepository.findByApplication(Application.MB.name());
+
         MobilePayment initiatedPayment = mobilePaymentService.getPaymentBytUuidAndClient(operationUuid, subscriber.getClientMatricul())
                 .stream()
                 .findFirst()
@@ -346,7 +350,12 @@ public class TransactionController {
                 }
             }
 
-            InitPayment initPayment = InitPayment.AccountMvnToInitPay(initiatedPayment, subscriber);
+            InitPayment initPayment = InitPayment.AccountMvnToInitPayMamoni(initiatedPayment, subscriber);
+
+
+            InitPayment.Extra extra1 = new InitPayment.Extra();
+            extra1.setPayerFeePercentage(config.get().getPayerFeePercentage());
+            initPayment.setExtra(extra1);
 
             initPayment.setType(PaymentType.payout);
             initPayment.setChannel(channelCode);

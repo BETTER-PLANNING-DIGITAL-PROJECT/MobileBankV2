@@ -89,7 +89,7 @@ public class EmailService {
     @Async
     public void sendSimpleMessageAttach(String to, String subject, String text, String acc, byte[] pdfData) {
         try {
-            InstitutionConfig inst = institutionConfigService.getInstConfig();
+            InstitutionConfig inst = institutionConfigService.findByyApp(Application.MB.name());
             Session session = configure(inst);
             session.setProtocolForAddress("rfc822", "smtp");
 
@@ -161,8 +161,7 @@ public class EmailService {
                     smsMessage = replaceParameters(smsTemplate.get().getTemplate(), notification.getPayload());
                     var betaSms = BetaResponse.builder().message(smsMessage).destinations(notification.getPhoneNumber()).type("sms").build();
                     betaSmsService.sendSms(betaSms);
-//                    var next = NexaResponse.builder().sms(smsMessage).mobiles(notification.getPhoneNumber()).senderid(smsTemplate.get().getSubject()).build();
-//                    nexaService.LessSms(next);
+
                 }
 
                 if(emailTemplate.isPresent() && emailTemplate.get().getStatus().equals("ACTIVE")) {
@@ -185,8 +184,6 @@ public class EmailService {
                         smsMessage = replaceParameters(template.get().getTemplate(), notification.getPayload());
                         var betaSms = BetaResponse.builder().message(smsMessage).destinations(notification.getPhoneNumber()).type("sms").build();
                         betaSmsService.sendSms(betaSms);
-//                        var next = NexaResponse.builder().sms(smsMessage).mobiles(notification.getPhoneNumber()).senderid(template.get().getSubject()).build();
-//                        nexaService.LessSms(next);
                     }
                 }
             }

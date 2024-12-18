@@ -37,12 +37,17 @@ public class InstitutionConfig {
     private String returnUrl;
     private String emailNoReply;
     private String host;
+    @Column(nullable = false, columnDefinition = "BIGINT DEFAULT 0")
+    private long PayerFeePercentage;
+//    @Column(nullable = false, columnDefinition = "BIT default 0")
+//    private boolean withdrawalOtp;
     @Column(unique = true)
     private String application;
-@Column(columnDefinition = "BIT default 0" )
+    @Column(nullable = false,columnDefinition = "BIT default 0" )
     private boolean trnasOtp;
     private Long port;
     private Integer verifyQuestNumber;
+    private Integer maxNumberOfAuthDevice;
     private Long maxVerifyAttempt;
     private String defaultPackage;
     private String proxy;

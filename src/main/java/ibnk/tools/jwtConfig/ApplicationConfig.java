@@ -105,7 +105,8 @@ public class ApplicationConfig  {
                 HttpHeaders.AUTHORIZATION,
                 "X-User-Security",
                 "X-Device-Info",
-                "X-Device",
+                "X",
+                "W",
                 "T",
                 "X-Forwarded-For"
         ));

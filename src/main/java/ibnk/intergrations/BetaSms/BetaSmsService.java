@@ -33,6 +33,7 @@ public class BetaSmsService {
     String publicKey;
     @Value("${betta.sms.access.key}")
     String accessKey;
+    private static final Logger logger = LogManager.getLogger(BetaSmsService.class);
 
     @Async
     public CompletableFuture<Boolean> sendSms(BetaResponse betaResponse){
@@ -52,6 +53,7 @@ public class BetaSmsService {
             // Log detailed error
             System.err.println("HTTP Status: " + ex.getStatusCode());
             System.err.println("Response Body: " + ex.getResponseBodyAsString());
+            logger.error("Received 4xx error response: Status = {}, Body = {}", ex.getStatusCode(), ex.getResponseBodyAsString());
             // Handle specific scenarios or rethrow custom exception
         } catch (Exception ex) {
             // Log unexpected errors

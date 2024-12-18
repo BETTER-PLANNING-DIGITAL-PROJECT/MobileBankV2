@@ -27,8 +27,11 @@ public class ClientDevice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne()
+    @JoinColumn(name = "user_id")
+    private Subscriptions userId;
+
+
 
     @Column(name = "device_id", unique = true, nullable = false)
     private String deviceId;
@@ -55,7 +58,7 @@ public class ClientDevice {
     @Column(name = "browser_version")
     private String browserVersion;
 
-    @Column(name = "device_token")
+    @Column(name = "device_token",nullable = false)
     private String deviceToken;
 
     @Column(name = "ip_address", length = 45)

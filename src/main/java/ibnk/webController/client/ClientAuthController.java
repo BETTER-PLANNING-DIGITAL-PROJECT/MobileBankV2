@@ -132,7 +132,7 @@ public class ClientAuthController {
     public ResponseEntity<Object> authentication(HttpServletRequest request,
                                                  @Valid @RequestBody AuthDto auth,
                                                  @CookieValue(value = "user-device-cookie", required = false) String deviceCookie,
-                                                 @RequestHeader(value = "User-Agent") String device)throws UnauthorizedUserException {
+                                                 @RequestHeader(value = "User-Agent") String device) throws UnauthorizedUserException, JsonProcessingException {
         AuthResponse<Object, Object> resource = customerService.authenticate(auth,request);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", resource);
     }
@@ -212,8 +212,8 @@ public class ClientAuthController {
     }
     @CrossOrigin
     @PostMapping("/auth/set-pin/{uuid}")
-    public ResponseEntity<Object> setPinUser(@PathVariable(name = "uuid") String verificationUuid,@RequestBody ForgotPasswordDto.PinDto dto) throws UnauthorizedUserException,  ibnk.tools.error.ValidationException {
-        var otp = customerService.setPin( verificationUuid, dto);
+    public ResponseEntity<Object> setPinUser(@PathVariable(name = "uuid") String verificationUuid,@RequestBody ForgotPasswordDto.PinDto dto,HttpServletRequest request) throws UnauthorizedUserException, ibnk.tools.error.ValidationException, JsonProcessingException {
+        var otp = customerService.setPin( verificationUuid, dto,request);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", otp);
     }
 

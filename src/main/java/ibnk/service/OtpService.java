@@ -196,14 +196,14 @@ public class OtpService {
         return verification;
     }
 
-    public CustomerVerification GenerateAndSend(OtpEntity params, List<Object> payloads, Subscriptions subscriptions) throws ResourceNotFoundException, UnauthorizedUserException {
+    public CustomerVerification GenerateAndSend(OtpEntity params, List<Object> payloads, Subscriptions subscriptions) throws  UnauthorizedUserException {
         InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
         Long otpCode = (long) GenerateOtp();
-        if (params.getTransport().equals(NotificationChanel.MAIL) || params.getTransport().equals(NotificationChanel.BOTH)) {
-            if (!PasswordConstraintValidator.isValidEmail(params.getEmail())) {
-                throw new ResourceNotFoundException("Invalid Email Address");
-            }
-        }
+//        if (params.getTransport().equals(NotificationChanel.MAIL) || params.getTransport().equals(NotificationChanel.BOTH)) {
+//            if (!PasswordConstraintValidator.isValidEmail(params.getEmail())) {
+//                throw new ResourceNotFoundException("Invalid Email Address");
+//            }
+//        }
         ZoneId zoneId = ZoneId.systemDefault();
         ZonedDateTime zdt = LocalDateTime.now().atZone(zoneId);
         zdt.toLocalDateTime().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);

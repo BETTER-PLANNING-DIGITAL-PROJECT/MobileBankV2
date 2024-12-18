@@ -24,6 +24,7 @@ public class InitPayment {
     private ChannelCode channel;
 
     private PaymentType type;
+    private Extra extra;
 
     private String customer_id;
 
@@ -33,8 +34,9 @@ public class InitPayment {
 
     private String customer_phone;
 
-    public static InitPayment AccountMvnToInitPay(MobilePayment  accountMvtDto, Subscriptions subscriptions){
+    public static InitPayment AccountMvnToInitPayMamoni(MobilePayment  accountMvtDto, Subscriptions subscriptions){
         InitPayment init = new InitPayment();
+
         init.setAmount((long) accountMvtDto.getMontant());
         init.setCountry("cm");
         init.setRecipient(Integer.toString(Integer.parseInt(accountMvtDto.getTelephone())));
@@ -43,5 +45,15 @@ public class InitPayment {
         init.setCustomer_address("None");
         init.setCustomer_phone(subscriptions.getPhoneNumber());
         return init;
+    }
+
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Extra {
+        private Long payerFeePercentage ;
+
     }
 }

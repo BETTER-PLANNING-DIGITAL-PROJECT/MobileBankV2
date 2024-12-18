@@ -1,5 +1,7 @@
 package ibnk.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import ibnk.dto.*;
 import ibnk.dto.BankingDto.AccountEntityDto;
 import ibnk.dto.auth.*;
@@ -65,7 +67,7 @@ public class CustomerService {
     private final ClientVerificationRepository clientVerificationRepository;
     private final AccountService accountService;
     private final ClientSecurityQuestionRepository clientSecurityQuestionRepository;
-//    private final ClientSecurityQuestionRepository clie;
+    private final ClientDeviceRepository clientDeviceRepository;
     private final InstitutionConfigService institutionConfigService;
 
     private final ClientRequestRepository clientRequestRepository;
@@ -382,14 +384,20 @@ public class CustomerService {
         }
     }
 
-    public AuthResponse<Object, Object> authenticate(AuthDto request, HttpServletRequest requestIp) throws UnauthorizedUserException {
+    public AuthResponse<Object, Object> authenticate(AuthDto authDto, HttpServletRequest request) throws UnauthorizedUserException, JsonProcessingException {
         LOGGER.info("Enter >> Client Authentication Function");
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUserLogin(), request.getPassword()));
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authDto.getUserLogin(), authDto.getPassword()));
         Object client1 = authentication.getPrincipal();
         if (client1 instanceof UserEntity user) throw new UnauthorizedUserException("failed_login");
 
         Subscriptions client = (Subscriptions) client1;
         InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
+
+
+        String deviceHeader = request.getHeader("W");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ClientDevice headerDevice = objectMapper.readValue(deviceHeader, ClientDevice.class);
+
         try {
 
             if (client.getStatus() == null) {
@@ -422,7 +430,19 @@ public class CustomerService {
             List<Object> payloads = new ArrayList<>();
             if (!client.getFirstLogin()) {
 
-                int verifyMb = clientMatriculRepository.verifyPasswordAndClient(client.getClientMatricul(), request.getPassword());
+                Optional<ClientDevice> clientDevice = clientDeviceRepository.findClientDeviceByUserId(client);
+                if(clientDevice.isPresent()) {
+                    if( !Objects.equals(clientDevice.get().getDeviceId(), headerDevice.getDeviceId()) || !clientDevice.get().getIsActive()) {
+                        throw  new UnauthorizedUserException("");
+                    }
+                } else {
+                    clientDevice = clientDeviceRepository.findByDeviceId(headerDevice.getDeviceId());
+                    if(clientDevice.isPresent() ) {
+                        throw  new UnauthorizedUserException("");
+                    }
+                }
+
+                int verifyMb = clientMatriculRepository.verifyPasswordAndClient(client.getClientMatricul(), authDto.getPassword());
                 if (verifyMb != 1) {
                     ClientVerification verify = ClientVerification.builder()
                             .subscriptions(client)
@@ -430,19 +450,19 @@ public class CustomerService {
                             .role("USER LOGIN")
                             .verified(false)
                             .verificationType(VerificationType.USER)
-                            .ip(ip(requestIp))
+                            .ip(ip(request))
                             .phoneNumber(client.getPhoneNumber())
                             .message("failed_verification_onLogin")
                             .build();
                     clientVerificationRepository.save(verify);
-                    CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(client, config,  VerificationType.USER);
+                    CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(client, config, VerificationType.USER);
 
                     throw new FailedSecurityVerification("invalid username or password", verificationObject);
                 }
-
-                if( client.getSubscriptionDate().plusMinutes(15L).isBefore(LocalDateTime.now())){
+                if (client.getSubscriptionDate().plusHours(1L).plusMinutes(15L).isBefore(LocalDateTime.now())) {
                     throw new UnauthorizedUserException("password_expired");
                 }
+
 
                 if (config.getMinSecurityQuest() > 0) {
                     if (clientDto.getSecurityQuestionCounts() > 0)
@@ -466,7 +486,8 @@ public class CustomerService {
                 return new AuthResponse<>(clientDto, verificationObject);
             }
             else {
-                boolean match = passwordEncoder.matches(request.getPassword(), client.getPassword());
+
+                boolean match = passwordEncoder.matches(authDto.getPassword(), client.getPassword());
                 if (!match) {
                     ClientVerification verify = ClientVerification.builder()
                             .subscriptions(client)
@@ -474,18 +495,18 @@ public class CustomerService {
                             .role("USER LOGIN")
                             .verified(false)
                             .verificationType(VerificationType.USER)
-                            .ip(ip(requestIp))
+                            .ip(ip(request))
                             .phoneNumber(client.getPhoneNumber())
                             .message("failed password verification")
                             .build();
                     clientVerificationRepository.save(verify);
 
-                    CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(client, config,  VerificationType.USER);
+                    CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(client, config, VerificationType.USER);
 
                     throw new FailedSecurityVerification("invalid username or password", verificationObject);
                 }
 
-                if (Objects.equals(client.getPins(), null)) {
+                if (Objects.equals(client.getPins(), null) || Objects.equals(client.getPins(), "")) {
                     OtpEntity otpParams = OtpEntity.builder()
                             .email(client.getEmail())
                             .phoneNumber(client.getPhoneNumber())
@@ -506,6 +527,10 @@ public class CustomerService {
                     System.out.println("Exit2 >> Authentication Function");
                     return new AuthResponse<>(clientDto, verificationObject);
                 }
+
+//                if(config.getMaxNumberOfAuthDevice())
+
+                ClientDevice clientDevice = clientDeviceCheck(request, client);
 
                 if (client.getDoubleAuthentication()) {
 
@@ -545,6 +570,8 @@ public class CustomerService {
 
                     jwtToken = jwtService.generateTokenForClient(client);
                     institutionConfigService.archiveClientVerifications(client, VerificationType.USER);
+                    clientDevice.setLastLoginTime(LocalDateTime.now());
+                    clientDeviceRepository.save(clientDevice);
                     System.out.println("Exit3 >> Authentication Function");
                     return new AuthResponse<>(clientDto, jwtToken);
                 }
@@ -556,22 +583,56 @@ public class CustomerService {
         }
     }
 
-    public AuthResponse<Object, Object> OauthWithOtp(String guid, OtpAuth otpauth,HttpServletRequest request) throws UnauthorizedUserException, ResourceNotFoundException {
+    public ClientDevice clientDeviceCheck(HttpServletRequest request, Subscriptions subscription) throws  UnauthorizedUserException {
+        String deviceHeader = request.getHeader("W");
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            ClientDevice deviceInfo = objectMapper.readValue(deviceHeader, ClientDevice.class);
 
+            Optional<ClientDevice> existingDevice = clientDeviceRepository.findByDeviceIdAndIsActiveAndUserId(deviceInfo.getDeviceId(),true,subscription);
+
+            if(existingDevice.isEmpty()) {
+                throw new UnauthorizedUserException("");
+            }
+
+            return  existingDevice.get();
+
+
+            //            if (existingDevice.isPresent()) {
+//                existingDevice.get().setUserId(subscription.getUuid());
+//                existingDevice.get().setIsActive(true);
+//                existingDevice.get().setIsTrusted(true);
+//                existingDevice.get().setLastLoginTime(LocalDateTime.now());
+//                clientDeviceRepository.save(existingDevice.get());
+//            }else{
+//                throw new UnauthorizedUserException("Unauthorized_Device");
+//            }
+
+        } catch (Exception e) {
+            throw new UnauthorizedUserException(e.getMessage());
+        }
+
+    }
+
+    public AuthResponse<Object, Object> OauthWithOtp(String guid, OtpAuth otpauth, HttpServletRequest request) throws UnauthorizedUserException {
         Subscriptions subscriber = findClientByUuid(guid);
+        ClientDevice clientDevice = clientDeviceCheck(request,subscriber);
+
         String ip = ip(request);
-        otpService.VerifyOtp(otpauth, guid, subscriber,ip);
+        otpService.VerifyOtp(otpauth, guid, subscriber, ip);
 
         UserDto.CreateSubscriberClientDto clientDto = UserDto.CreateSubscriberClientDto.modelToDao(subscriber);
         clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(subscriber));
 
         Object jwtToken = jwtService.generateTokenForClient(subscriber);
+        clientDevice.setLastLoginTime(LocalDateTime.now());
+        clientDeviceRepository.save(clientDevice);
         return new AuthResponse<>(clientDto, jwtToken);
 
     }
 
     @Transactional
-    public String UpdatePassword(Subscriptions user, UpdatePasswordDto pass,HttpServletRequest requestIp) throws ValidationException, UnauthorizedUserException {
+    public String UpdatePassword(Subscriptions user, UpdatePasswordDto pass, HttpServletRequest requestIp) throws ValidationException, UnauthorizedUserException {
         InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
         Subscriptions subscriptions = findClientByUuid(user.getUuid());
         boolean isNewPass = pass.getNewPassword().matches(pass.getConfirmPassword());
@@ -594,7 +655,7 @@ public class CustomerService {
                     .build();
             clientVerificationRepository.save(verify);
 
-            CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(user, config,  VerificationType.UPDATE_PASSWORD);
+            CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(user, config, VerificationType.UPDATE_PASSWORD);
 
             throw new FailedSecurityVerification("Old Password does not match", verificationObject);
 
@@ -613,7 +674,7 @@ public class CustomerService {
         return "Updated";
     }
 
-    public String UpdatePin(Subscriptions user, UpdatePasswordDto.UpdatePinDto pin,HttpServletRequest requestIp) throws ValidationException, UnauthorizedUserException {
+    public String UpdatePin(Subscriptions user, UpdatePasswordDto.UpdatePinDto pin, HttpServletRequest requestIp) throws ValidationException, UnauthorizedUserException {
         try {
             validatePin(pin.getNewPin(), pin.getConfirmPin());
         } catch (IllegalArgumentException e) {
@@ -645,13 +706,13 @@ public class CustomerService {
                     .build();
             clientVerificationRepository.save(verify);
 
-            CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(user, config,  VerificationType.UPDATE_PIN);
+            CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(user, config, VerificationType.UPDATE_PIN);
 
             throw new FailedSecurityVerification("Old Pin does not match", verificationObject);
 
         }
 
-        if(isPinReUse){
+        if (isPinReUse) {
             throw new ValidationException("New pin has to be different from old Pin");
         }
         pin.setNewPin(passwordEncoder.encode(pin.getConfirmPin()));
@@ -660,8 +721,6 @@ public class CustomerService {
 
         return "Updated";
     }
-
-
 
 
     public AuthResponse<Object, Object> forgotPassword(String login) throws UnauthorizedUserException, ResourceNotFoundException, ValidationException {
@@ -697,7 +756,9 @@ public class CustomerService {
     }
 
 
-    public AuthResponse<Object, Object> setPin(String guid, ForgotPasswordDto.PinDto dto) throws UnauthorizedUserException, ValidationException {
+    public AuthResponse<Object, Object> setPin(String guid, ForgotPasswordDto.PinDto dto,HttpServletRequest  request) throws UnauthorizedUserException, ValidationException, JsonProcessingException {
+
+
         try {
             validatePin(dto.getPin(), dto.getConfirmPin());
         } catch (IllegalArgumentException e) {
@@ -719,6 +780,23 @@ public class CustomerService {
 
 
         Subscriptions subscriber = clientVerification.get().getSubscriptions();
+        String deviceHeader = request.getHeader("W");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ClientDevice headerDevice = objectMapper.readValue(deviceHeader, ClientDevice.class);
+
+        Optional<ClientDevice> clientDevice = clientDeviceRepository.findClientDeviceByUserId(subscriber);
+
+        if(clientDevice.isPresent()) {
+            if( !Objects.equals(clientDevice.get().getDeviceId(), headerDevice.getDeviceId()) && clientDevice.get().getIsActive()) {
+                throw  new UnauthorizedUserException("");
+            }
+        } else {
+            Optional<ClientDevice> existingDevice = clientDeviceRepository.findByDeviceId(headerDevice.getDeviceId());
+            if(existingDevice.isPresent() ) {
+                throw  new UnauthorizedUserException("");
+            }
+        }
+
         if (subscriber.getPassword() == null || subscriber.getPassword().isEmpty() || subscriber.getPassword().isBlank())
             throw new UnauthorizedUserException("");
         Optional<Client> matricul = clientMatriculRepository.findById(subscriber.getClientMatricul());
@@ -735,10 +813,22 @@ public class CustomerService {
         subscriptionRepository.save(subscriber);
         institutionConfigService.archiveClientVerifications(subscriber, VerificationType.OTP);
         Object jwtToken = jwtService.generateTokenForClient(subscriber);
+
         var result = UserDto.CreateSubscriberClientDto.modelToDao(subscriber);
 
+        if(clientDevice.isEmpty()) {
+            headerDevice.setUserId(subscriber);
+            headerDevice.setIsActive(true);
+            headerDevice.setIsTrusted(true);
+            headerDevice.setLastLoginTime(LocalDateTime.now());
+            clientDeviceRepository.save(headerDevice);
+        } else {
+            clientDevice.get().setLastLoginTime(LocalDateTime.now());
+            clientDevice.get().setIsActive(true);
+            headerDevice.setIsTrusted(true);
+            clientDeviceRepository.save(clientDevice.get());
+        }
         return new AuthResponse<>(result, jwtToken);
-
     }
 
     @Transactional
@@ -972,7 +1062,8 @@ public class CustomerService {
     public AuthResponse<Object, Object>
 
 
-    verifyFirstLogin(OtpAuth otp, String guid, HttpServletRequest request) throws ResourceNotFoundException, UnauthorizedUserException, ValidationException {
+    verifyFirstLogin(OtpAuth otp, String guid, HttpServletRequest request) throws  UnauthorizedUserException {
+
 
         Optional<OtpEntity> otpEntity = otpRepository.findByUuidAndUsed(guid, false);
         if (otpEntity.isEmpty()) throw new UnauthorizedUserException("failed_login");
@@ -983,15 +1074,14 @@ public class CustomerService {
             throw new UnauthorizedUserException("failed_login");
 
         String ip = ip(request);
-        ClientVerification verification = otpService.VerifyOtp(otp, otpEntity.get(), client.get(),ip);
+        ClientVerification verification = otpService.VerifyOtp(otp, otpEntity.get(), client.get(), ip);
 
         client.get().setContactVerification(true);
 
         System.out.println("Exit3 >> Authentication Function");
 
         UserDto.CreateSubscriberClientDto clientDto = UserDto.CreateSubscriberClientDto.modelToDao(client.get());
-//    TODO    clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(client.get()));
-
+        //    TODO    clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(client.get()));
 
 
         client.get().setPasswordResetRequest("ALLOW");
@@ -1005,11 +1095,11 @@ public class CustomerService {
 
         List<String> proxyList = new ArrayList<>(Collections.singleton(config.getProxy()));
 
-        return TOOLS.getClientIp(request,proxyList);
+        return TOOLS.getClientIp(request, proxyList);
     }
 
 
-    public ClientVerification verifySubscriber(OtpAuth otp, String guid,HttpServletRequest request) throws UnauthorizedUserException, ResourceNotFoundException, ValidationException {
+    public ClientVerification verifySubscriber(OtpAuth otp, String guid, HttpServletRequest request) throws UnauthorizedUserException, ResourceNotFoundException, ValidationException {
         Optional<Subscriptions> subscriber = subscriptionRepository.findByUuid(guid);
         if (subscriber.isEmpty()) throw new UnauthorizedUserException("failed_to_authenticate");
         Client matricul = clientMatriculRepository.findById(subscriber.get().getClientMatricul()).orElseThrow(() -> new UsernameNotFoundException("failed_to_authenticate ."));
@@ -1017,7 +1107,7 @@ public class CustomerService {
         subscriber.get().setClient(matricul);
 
         InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
-        ClientVerification verified = otpService.VerifyOtp(otp, guid, subscriber.get(),ip(request));
+        ClientVerification verified = otpService.VerifyOtp(otp, guid, subscriber.get(), ip(request));
         Subscriptions subscription = subscriber.get();
         if (config.getSubMethod().equals(SubMethod.AUTOMATIC)) {
             SubscriptionDao dao = new SubscriptionDao();
@@ -1087,7 +1177,7 @@ public class CustomerService {
     }
 
 
-    public ClientVerification verifyResetPassRequest(String guid, OtpAuth otp,HttpServletRequest request) throws ResourceNotFoundException, UnauthorizedUserException {
+    public ClientVerification verifyResetPassRequest(String guid, OtpAuth otp, HttpServletRequest request) throws  UnauthorizedUserException {
         Optional<Subscriptions> user = subscriptionRepository.findByUuid(guid);
         if (user.isEmpty()) {
             throw new UnauthorizedUserException("UNAUTHORIZED1");
@@ -1095,7 +1185,7 @@ public class CustomerService {
         if (!Objects.equals(user.get().getPasswordResetRequest(), "INITIATED")) {
             throw new UnauthorizedUserException("UNAUTHORIZED2");
         }
-        ClientVerification verified = otpService.VerifyOtp(otp, guid, user.get(),ip(request));
+        ClientVerification verified = otpService.VerifyOtp(otp, guid, user.get(), ip(request));
 
         user.get().setPasswordResetRequest("ALLOWED");
         subscriptionRepository.save(user.get());
