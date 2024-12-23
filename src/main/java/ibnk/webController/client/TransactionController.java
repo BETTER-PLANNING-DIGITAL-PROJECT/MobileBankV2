@@ -530,7 +530,7 @@ public class TransactionController {
         boolean isDebit;
 
         switch (TypeOperations.valueOf(json.getPc_TypeOp())) {
-            case CANALB, WATERBI, ENEOBI, NECRED, ORCRED, MOMODE, MTNCRE, OMDEPO, OACTRF ,FEEHIS,FEEBAL-> isDebit = true;
+            case CANALB, WATERBI, ENEOBI, NECRED, ORCRED, MOMODE, MTNCRE, OMDEPO, OACTRF -> isDebit = true;
             default -> isDebit = false;
         }
         BillingListDto item = accountService.amountBillingOptionWithVAT(json, isDebit,subscriptions);

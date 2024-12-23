@@ -128,7 +128,7 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
                 .otpMinBeforeExpire(5L)
                 .application(Application.MB.name())
                 .PayerFeePercentage(0)
-                .trnasOtp(true)
+                .trnasOtp(false)
                 .build();
 
        saveInstitutionConfig(institutionConfig2);

@@ -23,10 +23,6 @@
             <pattern>${COMMON_PATTERN}</pattern>
         </encoder>
     </appender>
-    <!-- Logger configuration for HikariCP metrics -->
-    <logger name="com.zaxxer.hikari" level="DEBUG" additivity="false">
-        <appender-ref ref="FILE_ALL" />
-    </logger>
 
     <!-- File Appender for the specific class -->
     <appender name="FILE_MY_SPECIFIC_CLASS" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -63,26 +59,11 @@
     <logger name="ibnk.service.BankingService.PaymentService" level="DEBUG" additivity="false">
         <appender-ref ref="PAYMENT_MY_SPECIFIC_CLASS" />
     </logger>
-    <!-- File Appender for the specific class -->
-    <appender name="BETASMS_MY_SPECIFIC_CLASS" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/sms_api.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- rollover daily -->
-            <fileNamePattern>logs/sms_api.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <!-- keep 30 days' worth of history -->
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder>
-            <pattern>${COMMON_PATTERN}</pattern>
-        </encoder>
-    </appender>
 
-   <!-- Logger configuration for the specific class -->
-    <logger name="ibnk.intergrations.BetaSms.BetaSmsService" level="DEBUG" additivity="false">
-        <appender-ref ref="BETASMS_MY_SPECIFIC_CLASS" />
+    <!-- Logger configuration for HikariCP metrics -->
+    <logger name="com.zaxxer.hikari" level="DEBUG" additivity="false">
+        <appender-ref ref="FILE_ALL" />
     </logger>
-
-
 
     <!-- Root Logger -->
     <root level="INFO">

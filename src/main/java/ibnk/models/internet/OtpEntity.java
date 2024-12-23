@@ -37,6 +37,7 @@ public class OtpEntity {
 
     @Column(nullable = false)
     private Long minBeforeExpire;
+
     @JsonIgnore
     private Long otp;
     @JsonIgnore
