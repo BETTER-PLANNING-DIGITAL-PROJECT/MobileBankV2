@@ -1,6 +1,7 @@
 package ibnk.webController;
 
 import ibnk.dto.BankingDto.MobileBankConfigDto;
+import ibnk.dto.DeviceDto;
 import ibnk.dto.UserDto;
 import ibnk.dto.clientSecurityUpdateDto;
 import ibnk.models.internet.*;
@@ -10,6 +11,7 @@ import ibnk.service.BankingService.AccountService;
 import ibnk.service.CustomerService;
 import ibnk.service.InstitutionConfigService;
 import ibnk.service.QuestionService;
+import ibnk.service.UserService;
 import ibnk.tools.ResponseHandler;
 import ibnk.tools.error.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class InstitutionConfigController {
     private final InstitutionConfigService institutionConfigService;
     private final AccountService accountService;
     private final CustomerService customerService;
+    private final UserService userService;
     private final QuestionService questionService;
     private final ClientSecurityQuestionRepository clientSecurityQuestionRepository;
 
@@ -171,5 +174,22 @@ public class InstitutionConfigController {
     public ResponseEntity<Object> updatClientStatus(@RequestBody clientSecurityUpdateDto body, @PathVariable("clientid") String clientid) {
         String response = customerService.updateClientStatus(body, clientid);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", response);
+    }
+    @PostMapping("reset-client-device/{uuid}")
+    public ResponseEntity<Object> ResetAllClientDevices(@PathVariable(name = "uuid") String uuid )  {
+
+        userService.archiveClientDevices(customerService.findClientByUuid(uuid));
+        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", "success");
+    }
+    @PostMapping("reset-client-device/{uuid}/{deviceUuid}")
+    public ResponseEntity<Object> ResetClientDevice(@PathVariable(name = "uuid") String uuid,@PathVariable(name = "deviceUuid") String deviceId ) throws  ResourceNotFoundException {
+
+        userService.archiveClientDevice(deviceId,customerService.findClientByUuid(uuid));
+        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", "success");
+    }
+    @GetMapping("list-client-device/{uuid}")
+    public ResponseEntity<Object> ClientDeviceList(@PathVariable(name = "uuid") String uuid ) {
+        List<DeviceDto>  tableRequest = userService.listDevices(uuid);
+        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", tableRequest);
     }
 }

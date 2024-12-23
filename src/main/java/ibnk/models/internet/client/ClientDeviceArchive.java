@@ -18,8 +18,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table
-public class ClientDevice {
-
+public class ClientDeviceArchive  {
     @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     @Column(unique = true, nullable = false)
