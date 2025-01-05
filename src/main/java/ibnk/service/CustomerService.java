@@ -532,29 +532,30 @@ public class CustomerService {
 
                 ClientDevice clientDevice = clientDeviceCheck(request, client);
 
-                if (client.getDoubleAuthentication()) {
-
-                    if (config.getMinSecurityQuest() > 0) {
-                        if (clientDto.getSecurityQuestionCounts() < config.getMinSecurityQuest()) {
-                            throw new UnauthorizedUserException("failed_login");
-                        }
-                    }
-
-                    OtpEntity otpParams = OtpEntity.builder()
-                            .email(client.getEmail())
-                            .phoneNumber(client.getPhoneNumber())
-                            .role(OtpEnum.DOUBLE_AUTHENTICATION)
-                            .transport(client.getPreferedNotificationChanel())
-                            .used(false)
-                            .sent(false)
-                            .guid(client.getUuid())
-                            .build();
-                    payloads.add(UserDto.CreateSubscriberClientDto.modelToDao(client));
-                    CustomerVerification verificationObject = otpService.GenerateAndSend(otpParams, payloads, client);
-                    institutionConfigService.archiveClientVerifications(client, VerificationType.USER);
-                    System.out.println("Exit2 >> Authentication Function");
-                    return new AuthResponse<>(clientDto, verificationObject);
-                } else {
+//                if (client.getDoubleAuthentication()) {
+//
+//                    if (config.getMinSecurityQuest() > 0) {
+//                        if (clientDto.getSecurityQuestionCounts() < config.getMinSecurityQuest()) {
+//                            throw new UnauthorizedUserException("failed_login");
+//                        }
+//                    }
+//
+//                    OtpEntity otpParams = OtpEntity.builder()
+//                            .email(client.getEmail())
+//                            .phoneNumber(client.getPhoneNumber())
+//                            .role(OtpEnum.DOUBLE_AUTHENTICATION)
+//                            .transport(client.getPreferedNotificationChanel())
+//                            .used(false)
+//                            .sent(false)
+//                            .guid(client.getUuid())
+//                            .build();
+//                    payloads.add(UserDto.CreateSubscriberClientDto.modelToDao(client));
+//                    CustomerVerification verificationObject = otpService.GenerateAndSend(otpParams, payloads, client);
+//                    institutionConfigService.archiveClientVerifications(client, VerificationType.USER);
+//                    System.out.println("Exit2 >> Authentication Function");
+//                    return new AuthResponse<>(clientDto, verificationObject);
+//                }
+//                else {
 
                     if (!client.getContactVerification()) {
                         throw new UnauthorizedUserException("failed_login");
@@ -574,7 +575,7 @@ public class CustomerService {
                     clientDeviceRepository.save(clientDevice);
                     System.out.println("Exit3 >> Authentication Function");
                     return new AuthResponse<>(clientDto, jwtToken);
-                }
+//                }
             }
         } catch (FailedSecurityVerification e) {
             throw e;
@@ -615,16 +616,21 @@ public class CustomerService {
     }
 
     public AuthResponse<Object, Object> OauthWithOtp(String guid, OtpAuth otpauth, HttpServletRequest request) throws UnauthorizedUserException {
-        Subscriptions subscriber = findClientByUuid(guid);
-        ClientDevice clientDevice = clientDeviceCheck(request,subscriber);
+
+        Optional<OtpEntity> otpEntity = otpRepository.findByUuidAndUsed(guid, false);
+        if (otpEntity.isEmpty()) throw new UnauthorizedUserException("failed_login");
+
+        Optional<Subscriptions> subscriber = subscriptionRepository.findByUuid(otpEntity.get().getGuid());
+        if (subscriber.isEmpty()) throw new UnauthorizedUserException("failed_login");
+        ClientDevice clientDevice = clientDeviceCheck(request,subscriber.get());
 
         String ip = ip(request);
-        otpService.VerifyOtp(otpauth, guid, subscriber, ip);
+        ClientVerification verification = otpService.VerifyOtp(otpauth, otpEntity.get(), subscriber.get(), ip);
 
-        UserDto.CreateSubscriberClientDto clientDto = UserDto.CreateSubscriberClientDto.modelToDao(subscriber);
-        clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(subscriber));
+        UserDto.CreateSubscriberClientDto clientDto = UserDto.CreateSubscriberClientDto.modelToDao(subscriber.get());
+        clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(subscriber.get()));
 
-        Object jwtToken = jwtService.generateTokenForClient(subscriber);
+        Object jwtToken = jwtService.generateTokenForClient(subscriber.get());
         clientDevice.setLastLoginTime(LocalDateTime.now());
         clientDeviceRepository.save(clientDevice);
         return new AuthResponse<>(clientDto, jwtToken);
