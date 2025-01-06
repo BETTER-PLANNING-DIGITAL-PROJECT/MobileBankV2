@@ -36,7 +36,7 @@ public class DeviceDto {
     public DeviceDto mapToDeviceDto(ClientDevice device) {
         DeviceDto dto = new DeviceDto();
         dto.setUuid(device.getUuid());
-        dto.setDeviceId(device.getDeviceId());
+        dto.setDeviceId(device.getId().getDeviceId());
         dto.setDeviceName(device.getDeviceName());
         dto.setDeviceType(device.getDeviceType().name());
         dto.setOsName(device.getOsName());
@@ -51,7 +51,7 @@ public class DeviceDto {
         dto.setIsActive(device.getIsActive());
         dto.setLatitude(device.getLatitude());
         dto.setLongitude(device.getLongitude());
-        dto.setUser( UserDto.CreateSubscriberClientDto.modelToDao(device.getUserId()));
+        dto.setUser( UserDto.CreateSubscriberClientDto.modelToDao(device.getId().getUserId()));
 
         return dto;
     }

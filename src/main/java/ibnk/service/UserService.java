@@ -8,6 +8,7 @@ import ibnk.models.internet.UserEntity;
 import ibnk.models.internet.authorization.Roles;
 import ibnk.models.internet.client.ClientDevice;
 import ibnk.models.internet.client.ClientDeviceArchive;
+import ibnk.models.internet.client.ClientDeviceId;
 import ibnk.models.internet.client.Subscriptions;
 import ibnk.repositories.banking.EmployeeRepository;
 import ibnk.repositories.internet.ClientDeviceArchiveRepository;
@@ -163,15 +164,12 @@ public class UserService {
     }
 
      public List<DeviceDto> listDevices(String uuid) {
-        return clientDeviceRepository.findAll().stream()
-                .filter(clientDevice -> clientDevice.getUserId() != null && uuid.equals(clientDevice.getUserId().getUuid()))
-                .map(clientDevice -> new DeviceDto().mapToDeviceDto(clientDevice)) // Assuming `mapToDeviceDto` is a method in the same class
-                .toList();
+        return clientDeviceRepository.findByUserUuid(uuid).stream().map(clientDevice -> new DeviceDto().mapToDeviceDto(clientDevice)).toList();
     }
 
     @Transactional
-    public void archiveClientDevices(Subscriptions sub) {
-        List<ClientDevice> devices = clientDeviceRepository.findClientDeviceByUserIdAndIsTrusted(sub,true);
+    public void archiveClientDevices(String uuid) {
+        List<ClientDevice> devices = clientDeviceRepository.findByUserUuid(uuid);
 
         List<ClientDeviceArchive> archives = new ArrayList<>();
         for (ClientDevice device : devices) {
@@ -179,7 +177,6 @@ public class UserService {
 
             archive.setId(device.getId());
             archive.setUuid(device.getUuid());
-            archive.setDeviceId(device.getDeviceId());
             archive.setDeviceToken(device.getDeviceToken());
             archive.setDeviceName(device.getDeviceName());
             archive.setDeviceType(device.getDeviceType());
@@ -191,21 +188,20 @@ public class UserService {
             archive.setIsTrusted(device.getIsTrusted());
             archive.setLongitude(device.getLongitude());
             archive.setLatitude(device.getLatitude());
-            archive.setUserId(device.getUserId());
-
             archives.add(archive);
         }
         clientDeviceArchiveRepository.saveAll(archives);
         clientDeviceRepository.deleteAllInBatch(devices);
     }
+
     @Transactional
     public void archiveClientDevice(String deviceId, Subscriptions sub) throws ResourceNotFoundException {
-        ClientDevice devices = clientDeviceRepository.findByDeviceIdAndIsActiveAndUserId(deviceId,true,sub).orElseThrow(()-> new ResourceNotFoundException("device-not-found"));
-            ClientDeviceArchive archive = new ClientDeviceArchive();
+        ClientDeviceId clientDeviceId = new ClientDeviceId(sub, deviceId);
+        ClientDevice devices = clientDeviceRepository.findById(clientDeviceId).orElseThrow(()-> new ResourceNotFoundException("device-not-found"));
 
+            ClientDeviceArchive archive = new ClientDeviceArchive();
             archive.setId(devices.getId());
             archive.setUuid(devices.getUuid());
-            archive.setDeviceId(devices.getDeviceId());
             archive.setDeviceToken(devices.getDeviceToken());
             archive.setDeviceName(devices.getDeviceName());
             archive.setDeviceType(devices.getDeviceType());
@@ -217,7 +213,6 @@ public class UserService {
             archive.setIsTrusted(devices.getIsTrusted());
             archive.setLongitude(devices.getLongitude());
             archive.setLatitude(devices.getLatitude());
-            archive.setUserId(devices.getUserId());
 
         clientDeviceArchiveRepository.save(archive);
         clientDeviceRepository.delete(devices);

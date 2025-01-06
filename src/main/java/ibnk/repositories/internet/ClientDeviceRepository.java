@@ -1,25 +1,22 @@
 package ibnk.repositories.internet;
 
 import ibnk.models.internet.client.ClientDevice;
+import ibnk.models.internet.client.ClientDeviceId;
 import ibnk.models.internet.client.Subscriptions;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ClientDeviceRepository extends JpaRepository<ClientDevice,Long> {
-    Optional<ClientDevice> findByDeviceIdAndIsActiveAndUserId(String deviceId, Boolean isActive, Subscriptions userId);
-    Optional<ClientDevice> findByDeviceId(String deviceId);
-    Optional<ClientDevice> findByDeviceIdAndDeviceToken(String deviceId,String deviceTok);
+public interface ClientDeviceRepository extends JpaRepository<ClientDevice, ClientDeviceId> {
 
-    Optional<ClientDevice> findClientDeviceByUserId(Subscriptions userId);
+    @Query("SELECT e FROM ClientDevice e WHERE e.id.userId.uuid = :subscriberUuid")
+    List<ClientDevice> findByUserUuid(@Param("subscriberUuid") String uuid);
 
-    Optional<ClientDevice> findByUuidAndIsActiveAndUserId(String uuid, Boolean isActive, Subscriptions userId);
-
-
-    List<ClientDevice> findClientDeviceByUserIdAndIsTrusted(Subscriptions userId, boolean trust);
-
-
+    @Query("SELECT e FROM ClientDevice e WHERE e.id.deviceId = :deviceId")
+    Optional<ClientDevice> findByUserDeviceId(@Param("deviceId") String deviceId);
 
 
 }

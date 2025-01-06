@@ -12,6 +12,7 @@ import ibnk.models.internet.InstitutionConfig;
 import ibnk.models.internet.OtpEntity;
 import ibnk.models.internet.UserEntity;
 import ibnk.models.internet.client.ClientDevice;
+import ibnk.models.internet.client.ClientDeviceId;
 import ibnk.models.internet.client.ClientRequest;
 import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.enums.*;
@@ -396,7 +397,7 @@ public class CustomerService {
 
         String deviceHeader = request.getHeader("W");
         ObjectMapper objectMapper = new ObjectMapper();
-        ClientDevice headerDevice = objectMapper.readValue(deviceHeader, ClientDevice.class);
+        ClientDeviceDto headerDevice = objectMapper.readValue(deviceHeader, ClientDeviceDto.class);
 
         try {
 
@@ -430,16 +431,24 @@ public class CustomerService {
             List<Object> payloads = new ArrayList<>();
             if (!client.getFirstLogin()) {
 
-                Optional<ClientDevice> clientDevice = clientDeviceRepository.findClientDeviceByUserId(client);
-                if(clientDevice.isPresent()) {
-                    if( !Objects.equals(clientDevice.get().getDeviceId(), headerDevice.getDeviceId()) || !clientDevice.get().getIsActive()) {
-                        throw  new UnauthorizedUserException("");
+                List<ClientDevice> clientDevices = clientDeviceRepository.findByUserUuid(client.getUuid());
+                Optional<ClientDevice>  clientDevice = clientDevices.stream().filter(device -> device.getId().getDeviceId().equals(headerDevice.getDeviceId())).findFirst();
+
+                if(config.isVerifyDevice()) {
+                    if(clientDevice.isPresent()) {
+                        if( !Objects.equals(clientDevice.get().getId().getDeviceId(), headerDevice.getDeviceId()) || !clientDevice.get().getIsActive()) {
+                            throw  new UnauthorizedUserException("");
+                        }
+                    } else {
+                        clientDevice = clientDeviceRepository.findByUserDeviceId(headerDevice.getDeviceId());
+                        if(clientDevice.isPresent() ) {
+                            throw  new UnauthorizedUserException("");
+                        }
                     }
-                } else {
-                    clientDevice = clientDeviceRepository.findByDeviceId(headerDevice.getDeviceId());
-                    if(clientDevice.isPresent() ) {
-                        throw  new UnauthorizedUserException("");
-                    }
+                }
+
+                if (client.getSubscriptionDate().plusHours(1L).plusMinutes(15L).isBefore(LocalDateTime.now())) {
+                    throw new UnauthorizedUserException("password_expired");
                 }
 
                 int verifyMb = clientMatriculRepository.verifyPasswordAndClient(client.getClientMatricul(), authDto.getPassword());
@@ -458,9 +467,6 @@ public class CustomerService {
                     CustomerVerification verificationObject = institutionConfigService.countRemainingCustomerTrials(client, config, VerificationType.USER);
 
                     throw new FailedSecurityVerification("invalid username or password", verificationObject);
-                }
-                if (client.getSubscriptionDate().plusHours(1L).plusMinutes(15L).isBefore(LocalDateTime.now())) {
-                    throw new UnauthorizedUserException("password_expired");
                 }
 
 
@@ -528,10 +534,33 @@ public class CustomerService {
                     return new AuthResponse<>(clientDto, verificationObject);
                 }
 
-//                if(config.getMaxNumberOfAuthDevice())
 
-                ClientDevice clientDevice = clientDeviceCheck(request, client);
+                List<ClientDevice> clientDevices = clientDeviceRepository.findByUserUuid(client.getUuid());
+                Optional<ClientDevice>  clientDevice = clientDevices.stream().filter(device -> device.getId().getDeviceId().equals(headerDevice.getDeviceId())).findFirst();
 
+                if(config.isVerifyDevice()) {
+                    if(clientDevice.isPresent()) {
+                        if( !Objects.equals(clientDevice.get().getId().getDeviceId(), headerDevice.getDeviceId()) || !clientDevice.get().getIsActive()) {
+                            throw  new UnauthorizedUserException("");
+                        }
+                    } else {
+                        clientDevice = clientDeviceRepository.findByUserDeviceId(headerDevice.getDeviceId());
+                        if(clientDevice.isPresent() ) {
+                            throw  new UnauthorizedUserException("");
+                        }
+                    }
+                } else {
+                    if(clientDevice.isPresent()) {
+                        clientDevice.get().setLastLoginTime(LocalDateTime.now());
+                        clientDeviceRepository.save(clientDevice.get());
+                    } else {
+                        ClientDevice newDevice = ClientDeviceDto.mapToEntity(headerDevice);
+                        ClientDeviceId newDeviceId = new ClientDeviceId(client, headerDevice.getDeviceId());
+                        newDevice.setId(newDeviceId);
+                        newDevice.setIpAddress(ip(request));
+                        clientDeviceRepository.save(newDevice);
+                    }
+                }
 //                if (client.getDoubleAuthentication()) {
 //
 //                    if (config.getMinSecurityQuest() > 0) {
@@ -571,8 +600,7 @@ public class CustomerService {
 
                     jwtToken = jwtService.generateTokenForClient(client);
                     institutionConfigService.archiveClientVerifications(client, VerificationType.USER);
-                    clientDevice.setLastLoginTime(LocalDateTime.now());
-                    clientDeviceRepository.save(clientDevice);
+
                     System.out.println("Exit3 >> Authentication Function");
                     return new AuthResponse<>(clientDto, jwtToken);
 //                }
@@ -588,26 +616,19 @@ public class CustomerService {
         String deviceHeader = request.getHeader("W");
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            ClientDevice deviceInfo = objectMapper.readValue(deviceHeader, ClientDevice.class);
+            ClientDeviceDto deviceInfo = objectMapper.readValue(deviceHeader, ClientDeviceDto.class);
+            ClientDeviceId deviceId = new ClientDeviceId(subscription, deviceInfo.getDeviceId());
 
-            Optional<ClientDevice> existingDevice = clientDeviceRepository.findByDeviceIdAndIsActiveAndUserId(deviceInfo.getDeviceId(),true,subscription);
+            Optional<ClientDevice> existingDevice = clientDeviceRepository.findById(deviceId);
 
             if(existingDevice.isEmpty()) {
                 throw new UnauthorizedUserException("");
             }
+            if(!existingDevice.get().getIsActive() || existingDevice.get().getIsTrusted()) {
+                throw new UnauthorizedUserException("");
+            }
 
             return  existingDevice.get();
-
-
-            //            if (existingDevice.isPresent()) {
-//                existingDevice.get().setUserId(subscription.getUuid());
-//                existingDevice.get().setIsActive(true);
-//                existingDevice.get().setIsTrusted(true);
-//                existingDevice.get().setLastLoginTime(LocalDateTime.now());
-//                clientDeviceRepository.save(existingDevice.get());
-//            }else{
-//                throw new UnauthorizedUserException("Unauthorized_Device");
-//            }
 
         } catch (Exception e) {
             throw new UnauthorizedUserException(e.getMessage());
@@ -622,7 +643,15 @@ public class CustomerService {
 
         Optional<Subscriptions> subscriber = subscriptionRepository.findByUuid(otpEntity.get().getGuid());
         if (subscriber.isEmpty()) throw new UnauthorizedUserException("failed_login");
-        ClientDevice clientDevice = clientDeviceCheck(request,subscriber.get());
+
+        InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
+
+        if(config.isVerifyDevice()) {
+            ClientDevice clientDevice = clientDeviceCheck(request,subscriber.get());
+            clientDevice.setLastLoginTime(LocalDateTime.now());
+            clientDeviceRepository.save(clientDevice);
+        }
+
 
         String ip = ip(request);
         ClientVerification verification = otpService.VerifyOtp(otpauth, otpEntity.get(), subscriber.get(), ip);
@@ -631,8 +660,7 @@ public class CustomerService {
         clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(subscriber.get()));
 
         Object jwtToken = jwtService.generateTokenForClient(subscriber.get());
-        clientDevice.setLastLoginTime(LocalDateTime.now());
-        clientDeviceRepository.save(clientDevice);
+
         return new AuthResponse<>(clientDto, jwtToken);
 
     }
@@ -788,20 +816,22 @@ public class CustomerService {
         Subscriptions subscriber = clientVerification.get().getSubscriptions();
         String deviceHeader = request.getHeader("W");
         ObjectMapper objectMapper = new ObjectMapper();
-        ClientDevice headerDevice = objectMapper.readValue(deviceHeader, ClientDevice.class);
+        ClientDeviceDto headerDevice = objectMapper.readValue(deviceHeader, ClientDeviceDto.class);
 
-        Optional<ClientDevice> clientDevice = clientDeviceRepository.findClientDeviceByUserId(subscriber);
+        InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
+        ClientDeviceId deviceId = new ClientDeviceId(subscriber, headerDevice.getDeviceId());
 
-        if(clientDevice.isPresent()) {
-            if( !Objects.equals(clientDevice.get().getDeviceId(), headerDevice.getDeviceId()) && clientDevice.get().getIsActive()) {
-                throw  new UnauthorizedUserException("");
+        Optional<ClientDevice> clientDevice = clientDeviceRepository.findById(deviceId);
+
+        if (config.isVerifyDevice()) {
+            if(clientDevice.isEmpty()) {
+                    throw  new UnauthorizedUserException("");
             }
-        } else {
-            Optional<ClientDevice> existingDevice = clientDeviceRepository.findByDeviceId(headerDevice.getDeviceId());
-            if(existingDevice.isPresent() ) {
-                throw  new UnauthorizedUserException("");
+            if(!clientDevice.get().getIsActive() || clientDevice.get().getIsTrusted()) {
+                throw new UnauthorizedUserException("");
             }
         }
+
 
         if (subscriber.getPassword() == null || subscriber.getPassword().isEmpty() || subscriber.getPassword().isBlank())
             throw new UnauthorizedUserException("");
@@ -823,15 +853,14 @@ public class CustomerService {
         var result = UserDto.CreateSubscriberClientDto.modelToDao(subscriber);
 
         if(clientDevice.isEmpty()) {
-            headerDevice.setUserId(subscriber);
-            headerDevice.setIsActive(true);
-            headerDevice.setIsTrusted(true);
-            headerDevice.setLastLoginTime(LocalDateTime.now());
-            clientDeviceRepository.save(headerDevice);
+            ClientDevice newDevice = ClientDeviceDto.mapToEntity(headerDevice);
+            newDevice.setIpAddress(ip(request));
+            ClientDeviceId newDeviceId = new ClientDeviceId(subscriber, headerDevice.getDeviceId());
+            newDevice.setId(newDeviceId);
         } else {
             clientDevice.get().setLastLoginTime(LocalDateTime.now());
             clientDevice.get().setIsActive(true);
-            headerDevice.setIsTrusted(true);
+            clientDevice.get().setIsTrusted(true);
             clientDeviceRepository.save(clientDevice.get());
         }
         return new AuthResponse<>(result, jwtToken);

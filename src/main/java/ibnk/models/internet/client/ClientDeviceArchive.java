@@ -19,22 +19,14 @@ import java.util.UUID;
 @Entity
 @Table
 public class ClientDeviceArchive  {
+
+    @EmbeddedId
+    private ClientDeviceId id;
+
     @GeneratedValue(strategy = GenerationType.UUID)
     @UuidGenerator
     @Column(unique = true, nullable = false)
     private String uuid;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne()
-    @JoinColumn(name = "user_id")
-    private Subscriptions userId;
-
-
-
-    @Column(name = "device_id", unique = true, nullable = false)
-    private String deviceId;
 
     @Column(name = "device_name")
     private String deviceName;

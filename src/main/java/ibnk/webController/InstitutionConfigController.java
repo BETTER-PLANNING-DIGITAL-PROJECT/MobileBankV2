@@ -177,8 +177,7 @@ public class InstitutionConfigController {
     }
     @PostMapping("reset-client-device/{uuid}")
     public ResponseEntity<Object> ResetAllClientDevices(@PathVariable(name = "uuid") String uuid )  {
-
-        userService.archiveClientDevices(customerService.findClientByUuid(uuid));
+        userService.archiveClientDevices(uuid);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", "success");
     }
     @PostMapping("reset-client-device/{uuid}/{deviceUuid}")

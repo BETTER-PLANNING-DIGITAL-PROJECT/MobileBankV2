@@ -1,13 +1,18 @@
 package ibnk.tools.jwtConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ibnk.dto.ClientDeviceDto;
 import ibnk.models.banking.Client;
+import ibnk.models.internet.InstitutionConfig;
 import ibnk.models.internet.UserEntity;
 import ibnk.models.internet.client.ClientDevice;
+import ibnk.models.internet.client.ClientDeviceId;
 import ibnk.models.internet.client.Subscriptions;
+import ibnk.models.internet.enums.Application;
 import ibnk.models.internet.enums.SubscriberStatus;
 import ibnk.repositories.banking.ClientMatriculRepository;
 import ibnk.repositories.internet.ClientDeviceRepository;
+import ibnk.service.InstitutionConfigService;
 import ibnk.tools.error.UnauthorizedUserException;
 import ibnk.tools.security.SecuritySubscriptionService;
 import ibnk.tools.security.SecurityUserService;
@@ -37,6 +42,7 @@ public class JwtTokenFilter  extends OncePerRequestFilter  {
     private final SecuritySubscriptionService subscriptionService;
     private final ClientMatriculRepository clientMatriculRepository;
     private final ClientDeviceRepository clientDeviceRepository;
+    private final InstitutionConfigService institutionConfigService;
 
     @SneakyThrows
     @Override
@@ -47,7 +53,7 @@ public class JwtTokenFilter  extends OncePerRequestFilter  {
 
         try {
             String authHeader = request.getHeader("Authorization");
-            String deviceId = getCookieValue(request, "user-device-cookie");
+//            String deviceId = getCookieValue(request, "user-device-cookie");
 
             String jwt;
 
@@ -80,13 +86,25 @@ public class JwtTokenFilter  extends OncePerRequestFilter  {
                 if(userDetails.isEmpty()) throw new UnauthorizedUserException("unauthorized_credentials");
 
                 String deviceHeader = request.getHeader("X");
-                ObjectMapper objectMapper = new ObjectMapper();
-                    ClientDevice deviceInfo = objectMapper.readValue(deviceHeader, ClientDevice.class);
-                    Optional<ClientDevice> existingDevice = clientDeviceRepository.findByDeviceIdAndIsActiveAndUserId(deviceInfo.getDeviceId(),true,userDetails.get());
-                    if(existingDevice.isEmpty()) {
+                if(deviceHeader.isEmpty()) {
+                    throw new UnauthorizedUserException("");
+                }
+                InstitutionConfig config = institutionConfigService.findByyApp(Application.MB.name());
+
+                if(config.isVerifyDevice()) {
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    ClientDeviceDto deviceInfo = objectMapper.readValue(deviceHeader, ClientDeviceDto.class);
+
+                    ClientDeviceId deviceId = new ClientDeviceId(userDetails.get(), deviceInfo.getDeviceId());
+                    Optional<ClientDevice> clientDevice = clientDeviceRepository.findById(deviceId);
+                    if(clientDevice.isEmpty()) {
                         throw new UnauthorizedUserException("");
                     }
 
+                    if(!clientDevice.get().getIsActive() || !clientDevice.get().getIsTrusted()) {
+                        throw new UnauthorizedUserException("");
+                    }
+                }
 
             Client matricul = clientMatriculRepository.findById(userDetails.get().getClientMatricul()).orElseThrow(() -> new UsernameNotFoundException("failed_login"));
             userDetails.get().setClient(matricul);
