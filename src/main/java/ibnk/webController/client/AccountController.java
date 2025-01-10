@@ -10,12 +10,10 @@ import ibnk.models.banking.MobileBeneficiairy;
 import ibnk.models.banking.MobileBeneficiairyEntity;
 import ibnk.models.internet.OtpEntity;
 import ibnk.models.internet.client.Subscriptions;
-import ibnk.models.internet.enums.EventCode;
-import ibnk.models.internet.enums.OtpEnum;
-import ibnk.models.internet.enums.RangeSelector;
-import ibnk.models.internet.enums.Status;
+import ibnk.models.internet.enums.*;
 import ibnk.repositories.banking.MobileBeneficiaryRepository;
 import ibnk.service.BankingService.AccountService;
+import ibnk.service.InstitutionConfigService;
 import ibnk.service.OtpService;
 import ibnk.service.ReportServiceRpt;
 import ibnk.tools.Interceptors.InterceptPin;
@@ -51,6 +49,7 @@ public class AccountController {
     private final ReportServiceRpt reportServiceRpt;
     private final MobileBeneficiaryRepository mobileBeneficiaryRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final InstitutionConfigService institutionConfigService;
 
     @CrossOrigin
     @GetMapping("listAll")
@@ -246,34 +245,52 @@ public class AccountController {
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", verificationObject);
     }
 
-    public ResponseEntity<Object> validatePendingBeneficiary(Subscriptions subscriber, String Uuid) throws Exception {
-        MobileBeneficiairyEntity bene;
+    public ResponseEntity<Object> validatePendingBeneficiary(Subscriptions subscriber, String uuid) throws Exception {
+        MobileBeneficiairyEntity beneficiary;
         List<Object> payload = new ArrayList<>();
 
         try {
-            bene = accountService.findBeneficiaryByUuid(Uuid);
-            bene.setStatus(Status.APPROVED.name());
-            mobileBeneficiaryRepository.save(bene);
+            // Retrieve beneficiary and update its status based on configuration
+            beneficiary = accountService.findBeneficiaryByUuid(uuid);
+            String beneficiaryStatus = institutionConfigService.findByyApp(Application.MB.name()).getBenefApprov().equals("NO")
+                    ? Status.APPROVED.name()
+                    : Status.NOTAPPROVED.name();
+            beneficiary.setStatus(beneficiaryStatus);
+            mobileBeneficiaryRepository.save(beneficiary);
 
-            payload.add(bene);
+            // Prepare payload
+            payload.add(beneficiary);
             payload.add(UserDto.CreateSubscriberClientDto.modelToDao(subscriber));
-            NotificationEvent event = new NotificationEvent();
-            event.setEventCode(EventCode.BENEFICIARY_APPROVED.name());
-            event.setPayload(payload);
-            event.setType(subscriber.getPreferedNotificationChanel());
-            event.setPhoneNumber(subscriber.getPhoneNumber());
-            event.setEmail(subscriber.getEmail());
-            event.setSubscriber(subscriber);
-            applicationEventPublisher.publishEvent(event);
 
+            // Determine the event code
+            EventCode eventCode = beneficiaryStatus.equals(Status.APPROVED.name())
+                    ? EventCode.BENEFICIARY_APPROVED
+                    : EventCode.BENEFICIARY_NOTAPPROVED;
+
+            // Create and publish the notification event
+            publishNotificationEvent(subscriber, payload, eventCode);
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ValidationException("some thing went wrong try later");
+            throw new ValidationException("Something went wrong, please try again later.");
         }
-        return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", bene);
+
+        return ResponseHandler.generateResponse(HttpStatus.OK, false, "Success", beneficiary);
     }
 
+    /**
+     * Publishes a notification event with the provided details.
+     */
+    private void publishNotificationEvent(Subscriptions subscriber, List<Object> payload, EventCode eventCode) {
+        NotificationEvent event = new NotificationEvent();
+        event.setEventCode(eventCode.name());
+        event.setPayload(payload);
+        event.setType(subscriber.getPreferedNotificationChanel());
+        event.setPhoneNumber(subscriber.getPhoneNumber());
+        event.setEmail(subscriber.getEmail());
+        event.setSubscriber(subscriber);
+        applicationEventPublisher.publishEvent(event);
+    }
     @GetMapping("list-beneficiaries")
     public ResponseEntity<Object> getAllBeneficiaryDetails(@AuthenticationPrincipal Subscriptions subscriber) throws SQLException {
         List<BeneficiaryDto> beneficiaries = accountService.findBeneficiaryByClientId(subscriber.getClientMatricul());

@@ -1,7 +1,6 @@
 package ibnk.dto;
 
 import ibnk.models.internet.client.ClientDevice;
-import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.enums.DeviceType;
 import lombok.Data;
 

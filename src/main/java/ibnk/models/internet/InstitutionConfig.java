@@ -58,7 +58,8 @@ public class InstitutionConfig {
 
     @Column(nullable = false,columnDefinition = "BIT default 0" )
     private boolean trnasOtp;
-
+    @Column(columnDefinition = "NVARCHAR(3) DEFAULT 'NO'" )
+    private String benefApprov;
     @Column(nullable = false, columnDefinition = "BIT default 0" )
     private boolean verifyDevice;
 
