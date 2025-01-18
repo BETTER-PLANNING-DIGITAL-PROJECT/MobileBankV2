@@ -193,15 +193,22 @@ public class AccountService {
         return response;
     }
     public AccountMvtDto ServiceCharge(AccountMvtDto item, Subscriptions subscription, HttpServletRequest request) throws  ValidationException {
-        MapSqlParameterSource in = new MapSqlParameterSource()
-                .addValue("Eaccount", subscription.getPrimaryAccount())
-                .addValue("ws_TypeOp", item.getTypeOp())
-                .addValue("Language",request.getLocale().getLanguage());
-//        item.setDate(LocalDate.now().toString());
-        Map<String, Object> out = comptabliteMb.execute(in);
-        AccountMvtDto response = AccountMvtDto.TransferToDao(out);
-        if (response.getPc_OutLECT() != 0) throw new ValidationException(response.getPc_OutMSG());
-        return response;
+       List<String> excludeCharge = new ArrayList<>();
+       excludeCharge.add("106375");
+       excludeCharge.add("100728");
+       if(!excludeCharge.contains(subscription.getClientMatricul())) {
+           MapSqlParameterSource in = new MapSqlParameterSource()
+                   .addValue("Eaccount", subscription.getPrimaryAccount())
+                   .addValue("ws_TypeOp", item.getTypeOp())
+                   .addValue("Language",request.getLocale().getLanguage());
+           Map<String, Object> out = comptabliteMb.execute(in);
+           AccountMvtDto response = AccountMvtDto.TransferToDao(out);
+           if (response.getPc_OutLECT() != 0) throw new ValidationException(response.getPc_OutMSG());
+           return response;
+       } else {
+           return new AccountMvtDto();
+       }
+
     }
 
     public BillingListDto amountBillingOptionWithVAT(BillingListDto item, boolean isDebit, Subscriptions subscriptions) throws ValidationException {
@@ -265,6 +272,7 @@ public class AccountService {
         Optional<BeneficiaryDto> beneficiaryInfo  = checkClientBeneficiary(subscriptions.getClientMatricul(), beneficiaryDto.getBenefactorAccountNumber())
                 .stream()
                 .findFirst();
+
         if (!beneficiaryDto.getMobile()) {
 
             if (beneficiaryInfo.isEmpty()) {

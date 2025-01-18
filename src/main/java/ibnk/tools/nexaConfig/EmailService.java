@@ -142,7 +142,6 @@ public class EmailService {
     }
 
 
-
     @EventListener
     @Async
     public void handleCustomEvent(Object event) {

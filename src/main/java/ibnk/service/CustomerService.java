@@ -827,7 +827,7 @@ public class CustomerService {
             if(clientDevice.isEmpty()) {
                     throw  new UnauthorizedUserException("");
             }
-            if(!clientDevice.get().getIsActive() || clientDevice.get().getIsTrusted()) {
+            if(!clientDevice.get().getIsActive() || !clientDevice.get().getIsTrusted()) {
                 throw new UnauthorizedUserException("");
             }
         }

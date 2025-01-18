@@ -70,12 +70,11 @@ public class AccountController {
 
     @PostMapping("service-charge")
     public ResponseEntity<Object> ServiceCharge(@RequestBody() AccountMvtDto json, @AuthenticationPrincipal Subscriptions subscriptions, HttpServletRequest request) throws ValidationException, BadRequestException {
-
-      accountService.ServiceCharge(json,subscriptions,request);
+        if(json.getAmount() > 0) {
+            accountService.ServiceCharge(json,subscriptions,request);
+        }
         return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", "Success");
     }
-
-
 
     @GetMapping("getDetails")
     public ResponseEntity<Object> getAllAccountsDetails(@AuthenticationPrincipal Subscriptions subscriber) {
