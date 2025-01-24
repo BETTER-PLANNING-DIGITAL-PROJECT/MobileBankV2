@@ -44,7 +44,6 @@ public class DeviceDto {
         dto.setAppVersion(device.getAppVersion());
         dto.setBrowserName(device.getBrowserName());
         dto.setBrowserVersion(device.getBrowserVersion());
-        dto.setDeviceToken(device.getDeviceToken());
         dto.setIpAddress(device.getIpAddress());
         dto.setLastLoginTime(device.getLastLoginTime());
         dto.setIsTrusted(device.getIsTrusted());

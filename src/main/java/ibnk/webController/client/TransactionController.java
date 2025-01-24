@@ -13,6 +13,7 @@ import ibnk.models.internet.InstitutionConfig;
 import ibnk.models.internet.OtpEntity;
 import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.enums.*;
+import ibnk.repositories.banking.MobileBeneficiaryRepository;
 import ibnk.repositories.internet.InstitutionConfigRepository;
 import ibnk.service.BankingService.AccountService;
 import ibnk.service.BankingService.MobilePaymentService;
@@ -55,8 +56,9 @@ public class TransactionController {
     private final TranzakService tranzakService;
     private final InstitutionConfigRepository institutionConfigRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final MobileBeneficiaryRepository mobileBeneficiaryRepository;
 
-//    @InterceptQuestions
+
     @InterceptPin
     @PostMapping("initiate-internal-transfer")
     public ResponseEntity<Object> makeTransfer(@RequestBody AccountTransferDto dao, @AuthenticationPrincipal Subscriptions subscription) throws Exception {
@@ -135,7 +137,7 @@ public class TransactionController {
 
     }
 
-//    @InterceptQuestions
+
     @PostMapping("initiate/{type}")
     @InterceptPin
     public ResponseEntity<Object> inititateBankTransaction(@RequestBody AccountMvtDto dto, @AuthenticationPrincipal Subscriptions subscriber, @PathVariable String type) throws Exception {
@@ -156,6 +158,7 @@ public class TransactionController {
         }
 
         if (type.equals("withdrawal")) {
+//            MobileBeneficiaryRepository Beneficiary = this.mobileBeneficiaryRepository.findByClientAndBeneficiary()
             mobilePayment = MobilePayment.AccountMvtToMobilePayWithdraw(dto, subscriber);
             mobilePayment.setStatus("INITIATED");
 
@@ -241,85 +244,6 @@ public class TransactionController {
         }
 
     }
-
-//    @InterceptQuestions
-//    @PostMapping("diaspora-deposit")
-//    public ResponseEntity<Object> diasporaDeposit(@RequestBody AccountMvtDto dto, @AuthenticationPrincipal Subscriptions subscriber) throws ResourceNotFoundException, JsonProcessingException, ValidationException {
-//        dto.setTypeOp("MOMODE");
-//        MobilePayment initiatedPayment = MobilePayment.AccountMvtToMobilePayDeposit(dto, subscriber);
-//        initiatedPayment.setUuid(generateUniqueReference());
-//        mobilePaymentService.insertionMobilePayment(initiatedPayment);
-//
-//        InitiateCollection collectionDto = new InitiateCollection();
-//        collectionDto.setDescription(dto.getDescription());
-//        collectionDto.setAmount(String.valueOf(dto.getAmount()));
-//        collectionDto.setCurrencyCode(dto.getCurrency());
-//        collectionDto.setMchTransactionRef(initiatedPayment.getUuid());
-//        collectionDto.setReturnUrl("");
-//        InitiateCollectionResponse response = null;
-//
-//        try {
-//            response = tranzakService.generateRedirectPayment(collectionDto, subscriber);
-//            initiatedPayment.setPaymentGatewaysUuid(response.getData().getRequestId());
-//            initiatedPayment.setTrxNumber(response.getData().getMchTransactionRef().substring(1, 10));
-//            mobilePaymentService.updateMobilePayment(initiatedPayment);
-//
-//        } catch (Exception e) {
-//            initiatedPayment.setStatus("FAILED");
-//            mobilePaymentService.updateMobilePayment(initiatedPayment);
-//            e.printStackTrace();
-//            throw e;
-//        }
-//        return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", response);
-//    }
-
-    // TODO Test "diaspora-deposit/callBack"
-//    @PostMapping("diaspora-deposit/callBack")
-//    public ResponseEntity<Object> diasporaDepositCallBack(@RequestBody PaymentCallbackDto dto, @AuthenticationPrincipal Subscriptions subscriber) throws Exception {
-//        // Process the payment callback
-//        // Extract relevant information and perform necessary actions
-//        JSONObject jsonObject = new JSONObject();
-//        String requestId = dto.getResource().getRequestId();
-//        String status = dto.getResource().getStatus();
-//
-//        MobilePayment pay = mobilePaymentService.get_paymentUuid(dto.getResource().getRequestId())
-//                .stream()
-//                .findFirst()
-//                .orElseThrow(() -> new ResourceNotFoundException("Request Does not Exist"));
-//
-//        if (pay.getStatus().equals("PENDING") && !pay.getCallBackReceive()) {
-//            pay.setCallBackReceive(false);
-//            pay.setTrxNumber(dto.getResource().getTransactionId());
-//            mobilePaymentService.updateMobilePayment(pay);
-//            System.out.println("Received payment callback for request ID: " + requestId + " with status: " + status);
-//            if (status.equals("SUCCESSFUL")) {
-//                // Example: Update database,
-//                AccountBalanceDto.AccountDebitDto debit = accountService.CreditDiaspora(pay);
-//                System.out.println("GLOBAL BANK DEBIT:" + debit.getPc_OutMSG());
-//                if (debit.getPc_OutId() == 0) {
-//                    pay.setStatus("SUCCESS");
-//                    mobilePaymentService.updateMobilePayment(pay);
-//                    return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", pay);
-//                }
-//            }
-//            if (pay.getStatus().trim().equals("FAILED")) {
-//                jsonObject.put("status", 0);
-//                jsonObject.put("message", "INVALID PAYMENT STATUS");
-//                pay.setStatus("FAILED");
-//                mobilePaymentService.updateMobilePayment(pay);
-//                return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", jsonObject);
-//            }
-//        }
-//
-//        if (pay.getCallBackReceive()) {
-//            jsonObject.put("status", 0);
-//            jsonObject.put("message", "INVALID PAYMENT");
-//            return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", jsonObject);
-//        }
-//        mobilePaymentService.updateMobilePayment(pay);
-//        return ResponseHandler.generateResponse(HttpStatus.OK, false, status.trim(), pay);
-//
-//    }
 
 
     public ResponseEntity<Object> validatedInitiatedOperation(Subscriptions subscriber, String operationUuid) throws Exception {
@@ -453,6 +377,7 @@ public class TransactionController {
         throw new ResourceNotFoundException("invalid_transaction");
     }
 
+
     public ResponseEntity<Object> validateInitiatedTransfer(Subscriptions subscriber, String transferUuid) throws Exception {
         DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         AccountTransferDto trans = new AccountTransferDto();
@@ -520,6 +445,7 @@ public class TransactionController {
 
     }
 
+
     @PostMapping(("billing-option"))
     public ResponseEntity<Object> BillingOptionVAT( @RequestBody() BillingListDto json, @AuthenticationPrincipal Subscriptions subscriptions) throws ValidationException, BadRequestException {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
@@ -568,6 +494,7 @@ public class TransactionController {
         }
         return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", response.getData().getVerifiedName());
     }
+
 
     @GetMapping(value = "/transactionStatus/{uuid}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> sendEventStream(@PathVariable String uuid, @AuthenticationPrincipal Subscriptions subscriber) throws Exception {

@@ -76,9 +76,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FailedLoginException.class)
     public ResponseEntity<?> handleFailedLoginException(FailedLoginException ex, HttpServletRequest request) {
-        System.out.println(ex.getLoginType());
-        AuditLogin auditLogin = new AuditLogin();
 
+        AuditLogin auditLogin = new AuditLogin();
         auditLogin.setLoginIp(request.getRemoteAddr());
         auditLogin.setLogin((String) request.getAttribute("login"));
         auditLogin.setLoginDevice(request.getHeader("X-CLIENT-DEVICE"));
@@ -96,18 +95,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<?> handleUsernameNotFoundException(UsernameNotFoundException ex, HttpServletRequest request) {
-//        AuditLogin auditLogin = new AuditLogin();
-//
-//        auditLogin.setLoginIp(request.getRemoteAddr());
-//        auditLogin.setLogin((String) request.getAttribute("login"));
-//        auditLogin.setLoginDevice(request.getHeader("X-CLIENT-DEVICE"));
-//        auditLogin.setMessage(ex.getMessage());
-//
-//        auditLogin.setStatus(ex.getStatus());
-//        auditLogin.setLoginUuid(ex.getUserUuid());
-//        auditLogin.setLoginType(ex.getLoginType());
-//
-//        auditLoginRepository.save(auditLogin);
 
         ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getRequestURI());
         return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);

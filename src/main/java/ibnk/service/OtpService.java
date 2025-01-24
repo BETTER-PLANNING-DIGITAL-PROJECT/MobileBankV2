@@ -328,7 +328,6 @@ public class OtpService {
                     .verificationType(VerificationType.OTP)
                     .message("verified")
                     .build();
-            clientVerificationRepository.save(verify);
             return clientVerificationRepository.save(verify);
         } catch (Exception ex) {
             ClientVerification verify = ClientVerification.builder()

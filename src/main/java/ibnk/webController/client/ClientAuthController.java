@@ -213,8 +213,8 @@ public class ClientAuthController {
     @CrossOrigin
     @PostMapping("/auth/set-pin/{uuid}")
     public ResponseEntity<Object> setPinUser(@PathVariable(name = "uuid") String verificationUuid,@RequestBody ForgotPasswordDto.PinDto dto,HttpServletRequest request) throws UnauthorizedUserException, ibnk.tools.error.ValidationException, JsonProcessingException {
-        var otp = customerService.setPin( verificationUuid, dto,request);
-        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", otp);
+        var res = customerService.setPin( verificationUuid, dto,request);
+        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", res);
     }
 
     @CrossOrigin

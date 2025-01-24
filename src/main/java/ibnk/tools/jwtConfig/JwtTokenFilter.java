@@ -95,7 +95,7 @@ public class JwtTokenFilter  extends OncePerRequestFilter  {
                     ObjectMapper objectMapper = new ObjectMapper();
                     ClientDeviceDto deviceInfo = objectMapper.readValue(deviceHeader, ClientDeviceDto.class);
 
-                    ClientDeviceId deviceId = new ClientDeviceId(userDetails.get(), deviceInfo.getDeviceId());
+                    ClientDeviceId deviceId = new ClientDeviceId(userDetails.get(), deviceInfo.getDeviceId(), deviceInfo.getDeviceToken());
                     Optional<ClientDevice> clientDevice = clientDeviceRepository.findById(deviceId);
                     if(clientDevice.isEmpty()) {
                         throw new UnauthorizedUserException("");

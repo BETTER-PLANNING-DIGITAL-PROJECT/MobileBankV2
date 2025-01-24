@@ -180,12 +180,12 @@ public class InstitutionConfigController {
         userService.archiveClientDevices(uuid);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", "success");
     }
-    @PostMapping("reset-client-device/{uuid}/{deviceUuid}")
-    public ResponseEntity<Object> ResetClientDevice(@PathVariable(name = "uuid") String uuid,@PathVariable(name = "deviceUuid") String deviceId ) throws  ResourceNotFoundException {
-
-        userService.archiveClientDevice(deviceId,customerService.findClientByUuid(uuid));
-        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", "success");
-    }
+//    @PostMapping("reset-client-device/{uuid}/{deviceUuid}")
+//    public ResponseEntity<Object> ResetClientDevice(@PathVariable(name = "uuid") String uuid,@PathVariable(name = "deviceUuid") String deviceId ) throws  ResourceNotFoundException {
+//
+//        userService.archiveClientDevice(deviceId,customerService.findClientByUuid(uuid));
+//        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", "success");
+//    }
     @GetMapping("list-client-device/{uuid}")
     public ResponseEntity<Object> ClientDeviceList(@PathVariable(name = "uuid") String uuid ) {
         List<DeviceDto>  tableRequest = userService.listDevices(uuid);

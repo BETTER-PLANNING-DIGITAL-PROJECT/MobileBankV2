@@ -27,10 +27,10 @@ public class ClientVerification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonIgnore
     private Long id;
+
     @UuidGenerator
     @Column(unique = true, nullable = false)
     private String uuid;
-
 
     private String ip;
     private String phoneNumber;
@@ -62,6 +62,7 @@ public class ClientVerification {
     @CreationTimestamp
     @Column(updatable = false)
     @JsonIgnore
+
     private LocalDateTime createdAt;
     @UpdateTimestamp
     @JsonIgnore

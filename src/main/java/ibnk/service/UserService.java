@@ -177,7 +177,6 @@ public class UserService {
 
             archive.setId(device.getId());
             archive.setUuid(device.getUuid());
-            archive.setDeviceToken(device.getDeviceToken());
             archive.setDeviceName(device.getDeviceName());
             archive.setDeviceType(device.getDeviceType());
             archive.setBrowserName(device.getBrowserName());
@@ -192,29 +191,31 @@ public class UserService {
         }
         clientDeviceArchiveRepository.saveAll(archives);
         clientDeviceRepository.deleteAllInBatch(devices);
+
     }
 
-    @Transactional
-    public void archiveClientDevice(String deviceId, Subscriptions sub) throws ResourceNotFoundException {
-        ClientDeviceId clientDeviceId = new ClientDeviceId(sub, deviceId);
-        ClientDevice devices = clientDeviceRepository.findById(clientDeviceId).orElseThrow(()-> new ResourceNotFoundException("device-not-found"));
+//    @Transactional
+//    public void archiveClientDevice(String deviceId, Subscriptions sub) throws ResourceNotFoundException {
+//        ClientDeviceId clientDeviceId = new ClientDeviceId(sub, deviceId, );
+//        ClientDevice devices = clientDeviceRepository.findById(clientDeviceId).orElseThrow(()-> new ResourceNotFoundException("device-not-found"));
+//
+//            ClientDeviceArchive archive = new ClientDeviceArchive();
+//            archive.setId(devices.getId());
+//            archive.setUuid(devices.getUuid());
+//            archive.setDeviceName(devices.getDeviceName());
+//            archive.setDeviceType(devices.getDeviceType());
+//            archive.setBrowserName(devices.getBrowserName());
+//            archive.setAppVersion(devices.getAppVersion());
+//            archive.setIpAddress(devices.getIpAddress());
+//            archive.setLastLoginTime(devices.getLastLoginTime());
+//            archive.setBrowserVersion(devices.getBrowserVersion());
+//            archive.setIsTrusted(devices.getIsTrusted());
+//            archive.setLongitude(devices.getLongitude());
+//            archive.setLatitude(devices.getLatitude());
+//
+//        clientDeviceArchiveRepository.save(archive);
+//        clientDeviceRepository.delete(devices);
+//    }
 
-            ClientDeviceArchive archive = new ClientDeviceArchive();
-            archive.setId(devices.getId());
-            archive.setUuid(devices.getUuid());
-            archive.setDeviceToken(devices.getDeviceToken());
-            archive.setDeviceName(devices.getDeviceName());
-            archive.setDeviceType(devices.getDeviceType());
-            archive.setBrowserName(devices.getBrowserName());
-            archive.setAppVersion(devices.getAppVersion());
-            archive.setIpAddress(devices.getIpAddress());
-            archive.setLastLoginTime(devices.getLastLoginTime());
-            archive.setBrowserVersion(devices.getBrowserVersion());
-            archive.setIsTrusted(devices.getIsTrusted());
-            archive.setLongitude(devices.getLongitude());
-            archive.setLatitude(devices.getLatitude());
 
-        clientDeviceArchiveRepository.save(archive);
-        clientDeviceRepository.delete(devices);
-    }
 }

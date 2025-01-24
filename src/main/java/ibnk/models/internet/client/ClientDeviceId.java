@@ -20,4 +20,7 @@ public class ClientDeviceId {
 
     @Column(name = "device_id", unique = true, nullable = false)
     private String deviceId;
+
+    @Column(name = "device_token",nullable = false)
+    private String deviceToken;
 }

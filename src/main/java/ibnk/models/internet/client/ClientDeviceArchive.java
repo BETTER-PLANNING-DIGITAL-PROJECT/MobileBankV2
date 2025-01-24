@@ -50,9 +50,6 @@ public class ClientDeviceArchive  {
     @Column(name = "browser_version")
     private String browserVersion;
 
-    @Column(name = "device_token",nullable = false)
-    private String deviceToken;
-
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 

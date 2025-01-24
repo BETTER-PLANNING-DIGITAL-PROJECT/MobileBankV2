@@ -28,7 +28,6 @@ public class ClientDeviceDto {
                 .appVersion(headerDevice.getAppVersion())
                 .browserName(headerDevice.getBrowserName())
                 .deviceName(headerDevice.getDeviceName())
-                .deviceToken(headerDevice.getDeviceToken())
                 .deviceType(headerDevice.getDeviceType())
                 .browserVersion(headerDevice.getBrowserVersion())
                 .isTrusted(true)
