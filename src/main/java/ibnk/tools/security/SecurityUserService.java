@@ -35,8 +35,8 @@ public class SecurityUserService implements UserDetailsService {
     @Override
     public UserEntity loadUserByUsername(String userLogin) throws UsernameNotFoundException {
         LOGGER.info("Enter >> loadUserByUsername");
-        UserEntity user = userRepository.findByUserLogin(userLogin).orElseThrow(() -> new UsernameNotFoundException("failed_login"));
-            LOGGER.info("Exit >> loadUserByUsername");
+        UserEntity user = userRepository.findByUserLogin(userLogin).orElseThrow(() -> new UsernameNotFoundException("invalid username or password."));
+        LOGGER.info("Exit >> loadUserByUsername");
 
         return user;
     }

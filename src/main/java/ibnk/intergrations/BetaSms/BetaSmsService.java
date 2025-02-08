@@ -24,7 +24,6 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @RequiredArgsConstructor
 public class BetaSmsService {
-
     @Value("${betta.sms.base.url}")
     String baserUrl;
     @Value("${betta.sms.sender.id}")

@@ -12,6 +12,7 @@ public interface MobileBeneficiaryRepository extends JpaRepository<MobileBenefic
 
 
  Optional<MobileBeneficiairyEntity> findByClientAndBeneficiary(String client,String beneficiary);
+ Optional<MobileBeneficiairyEntity> findByClientAndTelephone(String client,String phoneNumber);
 
  Optional<MobileBeneficiairyEntity> findByClientAndBeneficiaryAndTelephone(String client, String beneficiary, String tel);
  Optional<MobileBeneficiairyEntity> findByClientAndBeneficiaryAndTelephoneAndStatus(String client, String beneficiary, String tel,String status);

@@ -217,7 +217,7 @@ public class ScheduleEvent {
 
         AccountMvtDto accountMvt = new AccountMvtDto();
         accountMvt.setAccountId(payment.getCpteJumelle());
-        accountMvt.setPhoneNumber(Integer.parseInt(payment.getTelephone()));
+        accountMvt.setPhoneNumber(payment.getTelephone());
         accountMvt.setAmount(payment.getMontant());
         accountMvt.setDate(currentDate);
         accountMvt.setIds("");

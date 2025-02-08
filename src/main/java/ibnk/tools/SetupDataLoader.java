@@ -80,32 +80,6 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
             userRepository.saveAll(users);
         }
 
-//        Optional<InstitutionConfig> inst = institutionConfigRepository.findById(1L);
-
-//            InstitutionConfig institutionConfig = InstitutionConfig.builder()
-//                    .id(6L)
-//                    .institutionName("BETTER PLANNING LTD")
-//                    .institutionEmail("noreply@finasddee-creditline.com")
-//                    .emailPassword("Finas@@2024*#")
-//                    .host("mail.finasddee-creditline.com")
-//                    .Phone("")
-//                    .POBOX("3755")
-//                    .Town("Douala-Bali")
-//                    .subMethod(SubMethod.AUTOMATIC)
-//                    .defaultPackage("STD")
-//                    .emailNoReply("noreply@finasddee-creditline.com")
-//                    .port(465L)
-//                    .questConfig(QuestionEnum.AUTO)
-//                    .returnUrl("https://internetbanking.finasddee-creditline.com/auth/diaspora-deposit-response?i=")
-//                    .maxSecurityQuest(5L)
-//                    .minSecurityQuest(2L)
-//                    .verifyQuestNumber(1)
-//                    .verificationResetTimer(15)
-//                    .maxVerifyAttempt(6L)
-//                    .otpMinBeforeExpire(5L)
-//                    .application(Application.IBNK.name())
-//                    .trnasOtp(true)
-//                    .build();
         InstitutionConfig institutionConfig2 = InstitutionConfig.builder()
                 .institutionName("BETTER PLANNING LTD")
                 .institutionEmail("webmaster@betterplanning.net")

@@ -121,21 +121,7 @@ public class OtpService {
         }
         CompletableFuture.completedFuture(null);
     }
-//    @Async()
-//    public void Resend(OtpEntity otp) {
-//        if (otp.getTransport().equals(NotificationChanel.SMS)) {
-//            var next = NexaResponse.builder().sms("Your otp is" + otp.getOtp()).mobiles(otp.getPhoneNumber()).senderid(otp.getSubject()).build();
-//            nexaService.LessSms(next);
-//        } else if (otp.getTransport().equals(NotificationChanel.MAIL)) {
-//            emailService.sendSimpleMessage(otp.getEmail(), otp.getSubject(), otp.getMessage());
-//        } else if (otp.getTransport().equals(NotificationChanel.BOTH)) {
-//            var next = NexaResponse.builder().sms("Your otp is" + otp.getOtp()).mobiles(otp.getPhoneNumber()).senderid(otp.getSubject()).build();
-//            nexaService.LessSms(next);
-//
-//            emailService.sendSimpleMessage(otp.getEmail(), otp.getSubject(), "Your otp is" + otp.getOtp());
-//        }
-//        CompletableFuture.completedFuture(null);
-//    }
+
 
     public CustomerVerification GenerateResendOtp(String uuid, Subscriptions subscriptions) throws Exception {
         Optional<OtpEntity> otpEntity = otpRepository.findByUuid(uuid);

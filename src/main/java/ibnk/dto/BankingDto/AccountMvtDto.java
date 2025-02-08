@@ -14,7 +14,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AccountMvtDto {
     private String accountId;
-    private int phoneNumber;
+    private String phoneNumber;
     private String description;
     private String ids;
     private String date;

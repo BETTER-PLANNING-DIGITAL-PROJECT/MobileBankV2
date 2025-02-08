@@ -18,7 +18,7 @@ public class ClientDeviceId {
     @JoinColumn(name = "user_id")
     private Subscriptions userId;
 
-    @Column(name = "device_id", unique = true, nullable = false)
+    @Column(name = "device_id", nullable = false)
     private String deviceId;
 
     @Column(name = "device_token",nullable = false)

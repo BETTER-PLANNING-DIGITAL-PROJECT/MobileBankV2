@@ -64,15 +64,15 @@ public class AccountService {
 
         this.accountTransferCall = new SimpleJdbcCall(bankingJdbcTemplate)
                 .withProcedureName("PS_MAKE_ACCOUNT_TRANSFERT");
-//        PS_MAKE_ACCOUNT_TRANSFER_IBNK
 
         this.amountBillingOptionWithVAT = new SimpleJdbcCall(bankingJdbcTemplate)
                 .withProcedureName("RetAmountBillingOptionWithVAT");
+
         this.mobileLimit = new SimpleJdbcCall(bankingJdbcTemplate)
                 .withProcedureName("PS_MOBILE_LIMIT");
+
         this.comptabliteMb = new SimpleJdbcCall(bankingJdbcTemplate)
                 .withProcedureName("PS_COMPTABLITE_MBANKING");
-//        IBS_GET_BILLING_WITH_VAT
 
     }
 
@@ -182,11 +182,10 @@ public class AccountService {
         if (response.getPc_OutLECT() != 200) throw new ValidationException(response.getPc_OutMSG());
         return response;
     }
-    public AccountMvtDto mobileLimit(AccountMvtDto item, Subscriptions subscription) throws SQLException, ValidationException {
+    public AccountMvtDto mobileLimit(Double amount, Subscriptions subscription) throws ValidationException {
         MapSqlParameterSource in = new MapSqlParameterSource()
                 .addValue("ws_Client", subscription.getClientMatricul())
-                .addValue("ws_Amount", item.getAmount());
-//        item.setDate(LocalDate.now().toString());
+                .addValue("ws_Amount", amount);
         Map<String, Object> out = mobileLimit.execute(in);
         AccountMvtDto response = AccountMvtDto.TransferToDao(out);
         if (response.getPc_OutLECT() != 0) throw new ValidationException(response.getPc_OutMSG());

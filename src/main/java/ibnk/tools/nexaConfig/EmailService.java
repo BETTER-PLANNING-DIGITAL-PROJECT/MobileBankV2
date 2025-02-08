@@ -34,13 +34,11 @@ import static ibnk.service. OtpService.replaceParameters;
 public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private final InstitutionConfigService institutionConfigService;
-    private final NexaService nexaService;
     private final BetaSmsService betaSmsService;
     private final NotificationTemplateRepository notificationTemplateRepository;
 
-    public EmailService(InstitutionConfigService institutionConfigService, NexaService nexaService, BetaSmsService betaSmsService, NotificationTemplateRepository notificationTemplateRepository) {
+    public EmailService(InstitutionConfigService institutionConfigService, BetaSmsService betaSmsService, NotificationTemplateRepository notificationTemplateRepository) {
         this.institutionConfigService = institutionConfigService;
-        this.nexaService = nexaService;
         this.betaSmsService = betaSmsService;
         this.notificationTemplateRepository = notificationTemplateRepository;
     }
@@ -166,7 +164,6 @@ public class EmailService {
                 if(emailTemplate.isPresent() && emailTemplate.get().getStatus().equals("ACTIVE")) {
                     mailMessage = replaceParameters(emailTemplate.get().getTemplate(), notification.getPayload());
                     mailSubject = replaceParameters(emailTemplate.get().getSubject(), notification.getPayload());
-
                     sendSimpleMessage(notification.getEmail(), mailSubject, mailMessage);
                 }
 

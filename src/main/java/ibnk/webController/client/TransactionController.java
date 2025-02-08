@@ -9,6 +9,8 @@ import ibnk.dto.auth.CustomerVerification;
 import ibnk.intergrations.Tranzak.TranzakService;
 import ibnk.intergrations.Tranzak.requestDtos.PhoneVerification;
 import ibnk.intergrations.Tranzak.responseDtos.PhoneVerifyResponse;
+import ibnk.models.banking.MobileBeneficiairy;
+import ibnk.models.banking.MobileBeneficiairyEntity;
 import ibnk.models.internet.InstitutionConfig;
 import ibnk.models.internet.OtpEntity;
 import ibnk.models.internet.client.Subscriptions;
@@ -158,13 +160,21 @@ public class TransactionController {
         }
 
         if (type.equals("withdrawal")) {
-//            MobileBeneficiaryRepository Beneficiary = this.mobileBeneficiaryRepository.findByClientAndBeneficiary()
             mobilePayment = MobilePayment.AccountMvtToMobilePayWithdraw(dto, subscriber);
             mobilePayment.setStatus("INITIATED");
 
             switch (TypeOperations.valueOf(mobilePayment.getTypeOperation())) {
                 case  MTNCRE,MOMODE,NECRED,OMDEPO,ORCRED -> {
-                    accountService.mobileLimit(dto,subscriber);
+                    if(!subscriber.getPhoneNumber().equals(dto.getPhoneNumber())) {
+                        Optional<MobileBeneficiairyEntity> beneficiary = this.mobileBeneficiaryRepository.findByClientAndTelephone(subscriber.getClientMatricul(), dto.getPhoneNumber());
+                        if(beneficiary.isEmpty()) {
+                            throw  new ValidationException("Unregistered Beneficiary");
+                        }
+                        if(!beneficiary.get().getStatus().equals("APPROVED")) {
+                            throw  new ValidationException("Beneficiary Not Approved");
+                        };
+                    }
+                    accountService.mobileLimit((double) dto.getAmount(),subscriber);
                 }
                 default -> {
                 }
@@ -298,7 +308,7 @@ public class TransactionController {
 
             AccountMvtDto accountMovementDto = AccountMvtDto.builder()
                     .accountId(initiatedPayment.getCpteJumelle())
-                    .phoneNumber(Integer.parseInt(initiatedPayment.getTelephone()))
+                    .phoneNumber(initiatedPayment.getTelephone())
                     .amount(initiatedPayment.getMontant())
                     .sens(2)
                     .typeOp(initiatedPayment.getTypeOperation())
@@ -447,7 +457,7 @@ public class TransactionController {
 
 
     @PostMapping(("billing-option"))
-    public ResponseEntity<Object> BillingOptionVAT( @RequestBody() BillingListDto json, @AuthenticationPrincipal Subscriptions subscriptions) throws ValidationException, BadRequestException {
+    public ResponseEntity<Object> BillingOptionVAT( @RequestBody() BillingListDto json, @AuthenticationPrincipal Subscriptions subscriber) throws ValidationException, BadRequestException {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
         String date = simpleDateFormat.format(new Date());
@@ -459,7 +469,15 @@ public class TransactionController {
             case CANALB, WATERBI, ENEOBI, NECRED, ORCRED, MOMODE, MTNCRE, OMDEPO, OACTRF -> isDebit = true;
             default -> isDebit = false;
         }
-        BillingListDto item = accountService.amountBillingOptionWithVAT(json, isDebit,subscriptions);
+
+        switch (TypeOperations.valueOf(json.getPc_TypeOp())) {
+            case  MTNCRE,MOMODE,NECRED,OMDEPO,ORCRED -> {
+                accountService.mobileLimit(json.getSvMontant(),subscriber);
+            }
+            default -> {
+            }
+        }
+        BillingListDto item = accountService.amountBillingOptionWithVAT(json, isDebit,subscriber);
         return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", item);
     }
 

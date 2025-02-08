@@ -66,7 +66,7 @@ public class MobilePayment {
         mobilePayment.setClient(subscriptions.getClientMatricul());
         mobilePayment.setMontant(accountMvtDto.getAmount());
         mobilePayment.setStatus("PENDING");
-        mobilePayment.setTelephone(Integer.toString(accountMvtDto.getPhoneNumber()) );
+        mobilePayment.setTelephone(accountMvtDto.getPhoneNumber() );
         mobilePayment.setType("WITHDRAWAL");
         mobilePayment.setFrais(0);
         mobilePayment.setPaymentGatewaysUuid("");
@@ -84,7 +84,7 @@ public class MobilePayment {
         mobilePayment.setClient(subscriptions.getClientMatricul());
         mobilePayment.setMontant(accountMvtDto.getAmount());
         mobilePayment.setStatus("PENDING");
-        mobilePayment.setTelephone(Integer.toString(accountMvtDto.getPhoneNumber()) );
+        mobilePayment.setTelephone(accountMvtDto.getPhoneNumber() );
         mobilePayment.setType("DEPOSIT");
         mobilePayment.setFrais(0);
         mobilePayment.setPaymentGatewaysUuid("");

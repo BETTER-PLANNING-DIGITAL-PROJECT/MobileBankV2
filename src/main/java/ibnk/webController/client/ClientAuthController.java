@@ -87,46 +87,6 @@ public class ClientAuthController {
     @Value("${spring.transak.auth}")
     String AUTH;
 
-    // REPORT TESTING ENDPOINT ONLY
-//    @gETMapping("e-statement-report")
-//    public ResponseEntity<Object> EReportGenerate(@RequestBody AccountHistoryDto dao, @AuthenticationPrincipal Subscriptions sub, @RequestParam String mimiType ) throws ReportSDKExceptionBase, IOException, ResourceNotFoundException {
-//
-//        String pdfBytes =null;
-//        switch (mimiType) {
-//            case "application/pdf":
-//                pdfBytes = reportServiceRpt.eClientReportStatement(dao, sub,"application/pdf");
-//                break;
-//            // Add cases for other supported MIME types if needed
-//            case "application/excel":
-//                pdfBytes = reportServiceRpt.eClientReportStatement(dao,sub,mimiType);
-//                break;
-//            default:
-//                // Handle unsupported MIME types
-//                return ResponseEntity.badRequest().body("Unsupported mimeType: " + mimiType);
-//        }
-//        return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", pdfBytes);
-//    }
-    @GetMapping("auth/generate-report")
-    public ResponseEntity<Object> generate(@RequestParam String mimiType) throws Exception {
-        InstitutionConfig inst = institutionConfigService.getInstConfig();
-        byte[] reportBytes = mediaService.stmtReport(inst.getInstitutionName(), inst.getPOBOX(), "STATEMENT", inst.getPhone(), inst.getTown(), "e9132c46-9765-43e6-81a8-ed5c7df25b7d", "application/pdf");
-        // Set response headers
-        // Create ByteArrayResource to wrap the byte array
-        return TOOLS.getObjectResponseEntity(mimiType, reportBytes);
-    }
-    @GetMapping("auth/report")
-    public byte[] report(@RequestParam String mimiType) throws Exception {
-        RptLogoEntity inst = rptLogoRepository.findAll().stream().findFirst().orElseThrow();
-
-        return  inst.getLogo();
-    }
-    @PostMapping("auth/send-betta")
-    public CompletableFuture<Boolean> betttaMessage() throws Exception {
-       var mess=  BetaResponse.builder().message("Test-Betta").destinations("683810038").type("sms").build();
-
-
-        return  betaSmsService.sendSms(mess);
-    }
 
     @PostMapping("/auth/authenticate")
     public ResponseEntity<Object> authentication(HttpServletRequest request,
@@ -144,66 +104,6 @@ public class ClientAuthController {
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", cus);
     }
 
-    @PostMapping("/auth/sendEmail")
-    public ResponseEntity<Object> sendEmail() {
-        emailService.sendSimpleMessage("benzeezmokom@gmail.com", "TEST",
-
-                """
-                        <body>
-                            <div style="font-family: Arial, sans-serif;">
-
-                                <h2>Welcome to Our Newsletter!</h2>
-
-                                <p>Dear Subscriber,</p>
-
-                                <p>Thank you for subscribing to our newsletter. We are thrilled to have you on board!</p>
-
-                                <p>Here's what you can expect from our newsletter:</p>
-
-                                <ul>
-                                    <li>Exclusive offers and promotions</li>
-                                    <li>Latest updates on our products and services</li>
-                                    <li>Useful tips and tricks</li>
-                                </ul>
-
-                                <p>We promise to deliver valuable content straight to your inbox. Stay tuned!</p>
-
-                                <p>Best Regards,<br> The Newsletter Team</p>
-
-                            </div>
-                        </body>
-                        """);
-        return ResponseHandler.generateResponse(HttpStatus.OK, true, "success", "Success");
-    }
-
-    @PostMapping("/auth/test")
-    public ResponseEntity<Object> testPay(@Valid @RequestBody AccountMvtDto dto, @AuthenticationPrincipal Subscriptions subscriber) throws  ResourceNotFoundException, JsonProcessingException, SQLException, ValidationException {
-        MobilePayment initiatedPayment = MobilePayment.AccountMvtToMobilePayDeposit(dto, subscriber);
-        initiatedPayment.setUuid(generateUniqueReference());
-        mobilePaymentService.insertionMobilePayment(initiatedPayment);
-
-        InitiateCollection collectionDto = new InitiateCollection();
-        collectionDto.setDescription(dto.getDescription());
-        collectionDto.setAmount(String.valueOf(dto.getAmount()));
-        collectionDto.setCurrencyCode(dto.getCurrency());
-        collectionDto.setMchTransactionRef(initiatedPayment.getUuid());
-        collectionDto.setReturnUrl("");
-        InitiateCollectionResponse response = null;
-
-        try {
-            response = tranzakService.generateRedirectPayment(collectionDto, subscriber);
-            initiatedPayment.setPaymentGatewaysUuid(response.getData().getRequestId());
-            initiatedPayment.setTrxNumber(response.getData().getMchTransactionRef().substring(1, 10));
-            mobilePaymentService.updateMobilePayment(initiatedPayment);
-        } catch (Exception e) {
-            initiatedPayment.setStatus("FAILED");
-            mobilePaymentService.updateMobilePayment(initiatedPayment);
-            e.printStackTrace();
-            throw e;
-        }
-        return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", response);
-    }
-
     @CrossOrigin
     @GetMapping("/auth/forgot/password/{login}")
     public ResponseEntity<Object> ForgotUserPassword(@PathVariable String login) throws UnauthorizedUserException, ResourceNotFoundException, ibnk.tools.error.ValidationException {
@@ -219,15 +119,15 @@ public class ClientAuthController {
 
     @CrossOrigin
     @PostMapping("/auth/set-password/{uuid}")
-    public ResponseEntity<Object> setUserPassword(@PathVariable(name = "uuid") String verificationUuid,@RequestBody ForgotPasswordDto dto) throws UnauthorizedUserException,  ibnk.tools.error.ValidationException {
-        customerService.setPassword( verificationUuid, dto);
+    public ResponseEntity<Object> setUserPassword(@PathVariable(name = "uuid") String verificationUuid,@RequestBody ForgotPasswordDto dto, HttpServletRequest request) throws ibnk.tools.error.ValidationException, JsonProcessingException {
+        customerService.setPassword( verificationUuid, dto, request);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "password set successfully", null);
     }
 
 
 
     @PostMapping("/auth/verifyOtp/{guid}")
-    public ResponseEntity<Object> VerifyOtpResetPasswordAndFirstLogin(HttpServletRequest request,@CookieValue(value = "user-device-cookie", required = false) String deviceCookie, @PathVariable(value = "guid") String guid, @RequestBody OtpAuth otp) throws ResourceNotFoundException, UnauthorizedUserException,  ExpiredPasswordException, ibnk.tools.error.ValidationException {
+    public ResponseEntity<Object> VerifyOtpResetPasswordAndFirstLogin(HttpServletRequest request, @PathVariable(value = "guid") String guid, @RequestBody OtpAuth otp) throws ResourceNotFoundException, UnauthorizedUserException,  ExpiredPasswordException, ibnk.tools.error.ValidationException {
         Object result = new Object();
         switch (OtpEnum.valueOf(otp.getRole())) {
             case RESET_PASSWORD -> {
@@ -298,12 +198,6 @@ public class ClientAuthController {
         return ResponseHandler.generateResponse(HttpStatus.OK, false, "success", response);
     }
 
-//    @PostMapping("/auth/subscription/request")
-//    public ResponseEntity<Object> getAccountBalance(@RequestBody SubscriptionRequestDto dto) {
-//        CustomerVerification verification = customerService.subscribeRequest(dto);
-//        return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", verification);
-//    }
-
     @PostMapping("auth/diaspora-deposit/call-back")
     public ResponseEntity<Object> diasporaDepositCallBack(@RequestBody PaymentCallbackDto dto, @AuthenticationPrincipal Subscriptions subscriber) throws Exception {
         // Process the payment callback
@@ -330,7 +224,7 @@ public class ClientAuthController {
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
                             String date = simpleDateFormat.format(new Date());
                             transfer.setAccountId(pay.getCpteJumelle());
-                            transfer.setPhoneNumber(Integer.parseInt(pay.getTelephone()));
+                            transfer.setPhoneNumber(pay.getTelephone());
                             transfer.setAmount(pay.getMontant());
                             transfer.setDate(date);
                             transfer.setIds("");
@@ -420,7 +314,7 @@ public class ClientAuthController {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
             String date = simpleDateFormat.format(new Date());
             transfer.setAccountId(pay.getCpteJumelle());
-            transfer.setPhoneNumber(Integer.parseInt(pay.getTelephone()));
+            transfer.setPhoneNumber(pay.getTelephone());
             transfer.setAmount(pay.getMontant());
             transfer.setDate(date);
             transfer.setIds("");
@@ -453,16 +347,6 @@ public class ClientAuthController {
 
     }
 
-    //    @PostMapping("auth/save-moral-Client")
-//    public ResponseEntity<Object> saveMoralClient(ClientRequestDto.MoralClientDto clientRequestDto) throws ResourceNotFoundException {
-//       String ans = clientRequestService.saveMoralRequest(clientRequestDto);
-//        return ResponseHandler.generateResponse(HttpStatus.OK, false, "Success", ans);
-//    }
-//    @PutMapping("auth/update-moral-Client/{uuid}")
-//    public ResponseEntity<Object> updateMoralClient(@PathVariable("uuid") String uuid,ClientRequestDto.MoralClientDto clientRequestDto) throws ResourceNotFoundException {
-//       String ans = clientRequestService.updateMoralRequest(uuid,clientRequestDto);
-//        return ResponseHandler.generateResponse(HttpStatus.OK, false, "Success", ans);
-//    }
     @PostMapping("auth/account-request")
     public ResponseEntity<Object> savePhysicalClient(@Valid @RequestBody ClientRequestDto.BasicRequestDto clientRequestDto) throws ResourceNotFoundException {
         boolean result = clientRequestService.initiateAccountRequest(clientRequestDto);

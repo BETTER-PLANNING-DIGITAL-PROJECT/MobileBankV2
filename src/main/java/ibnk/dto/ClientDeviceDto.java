@@ -23,7 +23,6 @@ public class ClientDeviceDto {
     private BigDecimal longitude;
 
     public static ClientDevice mapToEntity(ClientDeviceDto headerDevice) {
-        ClientDevice clientDevice = new ClientDevice();
         return ClientDevice.builder()
                 .appVersion(headerDevice.getAppVersion())
                 .browserName(headerDevice.getBrowserName())

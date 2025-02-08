@@ -6,6 +6,7 @@ import ibnk.dto.BankingDto.*;
 import ibnk.dto.NotificationEvent;
 import ibnk.dto.UserDto;
 import ibnk.dto.auth.CustomerVerification;
+import ibnk.models.banking.Account;
 import ibnk.models.banking.MobileBeneficiairy;
 import ibnk.models.banking.MobileBeneficiairyEntity;
 import ibnk.models.internet.OtpEntity;
@@ -300,6 +301,21 @@ public class AccountController {
         benef.setAgence(subscriber.getBranchCode());
         benef.setBenefactorAccountNumber("mobile");
         beneficiaries.add(0, benef);
+
+        List<AccountEntityDto> accounts = accountService.findClientAccounts(subscriber.getClientMatricul());
+
+        accounts.forEach(account -> {
+            if(account.getAuthorizeDeposit().equals("Yes")) {
+                BeneficiaryDto accountBenef = new BeneficiaryDto();
+                accountBenef.setName(account.getAccountName());
+                accountBenef.setPhoneNumber(null);
+                accountBenef.setBeneficiaire(account.getAccountID());
+                accountBenef.setAgence(account.getOurBranchID());
+                accountBenef.setBenefactorAccountNumber(account.getAccountID());
+                beneficiaries.add(accountBenef);
+            }
+        });
+
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", beneficiaries);
     }
 

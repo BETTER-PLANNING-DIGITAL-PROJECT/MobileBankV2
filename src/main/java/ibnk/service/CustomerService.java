@@ -54,6 +54,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.bouncycastle.crypto.tls.ConnectionEnd.client;
+
 @RequiredArgsConstructor
 @Service
 public class CustomerService {
@@ -422,36 +424,20 @@ public class CustomerService {
             List<Object> payloads = new ArrayList<>();
             if (!client.getFirstLogin()) {
 
-                if(config.isVerifyDevice()) {
-                    if(clientDevice.isPresent()) {
-                        if( !Objects.equals(clientDevice.get().getId().getDeviceId(), headerDevice.getDeviceId()) || !clientDevice.get().getIsActive()) {
-                            throw  new UnauthorizedUserException("unauthorized device");
-                        }
-                    } else {
-                        clientDevice = clientDeviceRepository.findByUserDeviceId(headerDevice.getDeviceId());
-                        if(clientDevice.isPresent() ) {
-                            throw  new UnauthorizedUserException("unauthorized device");
-                        }
-                    }
-                }
-
                 if (client.getStatus().equals(SubscriberStatus.SUSPENDED.name())) {
-                    throw new UnauthorizedUserException("account_suspended");
+                    throw new UnauthorizedUserException("account is suspended");
                 }
 
                 if (client.getStatus().equals(SubscriberStatus.BLOCKED.name())) {
-                    throw new UnauthorizedUserException("account_blocked");
+                    throw new UnauthorizedUserException("account is blocked");
                 }
 
                 if (!client.getStatus().equals(SubscriberStatus.ACTIVE.name())) {
                     throw new UnauthorizedUserException("account is not activated");
                 }
 
-                if (client.getSubscriptionDate().plusHours(1L).plusMinutes(15L).isBefore(LocalDateTime.now())) {
-                    throw new UnauthorizedUserException("password_expired");
-                }
-
                 int verifyMb = clientMatriculRepository.verifyPasswordAndClient(client.getClientMatricul(), authDto.getPassword());
+
                 if (verifyMb != 1) {
                     ClientVerification verify = ClientVerification.builder()
                             .subscriptions(client)
@@ -468,13 +454,14 @@ public class CustomerService {
                     throw new UnauthorizedUserException("invalid username or password ");
                 }
 
+//                if (config.getMinSecurityQuest() > 0) {
+//
+//                    if (clientDto.getSecurityQuestionCounts() > 0)
+//                        throw new UnauthorizedUserException("unauthorized");
+//                }
 
 
 
-                if (config.getMinSecurityQuest() > 0) {
-                    if (clientDto.getSecurityQuestionCounts() > 0)
-                        throw new UnauthorizedUserException("unauthorized");
-                }
                 OtpEntity otpParams = OtpEntity.builder()
                         .email(client.getEmail())
                         .phoneNumber(client.getPhoneNumber())
@@ -483,6 +470,13 @@ public class CustomerService {
                         .used(false)
                         .guid(client.getUuid())
                         .build();
+
+                if(clientDevice.isEmpty()) {
+                    ClientDevice device = ClientDeviceDto.mapToEntity(headerDevice);
+                    device.setId(deviceId);
+                    device.setIsTrusted(false);
+                    clientDeviceRepository.save(device);
+                }
 
                 payloads.add(UserDto.CreateSubscriberClientDto.modelToDao(client));
                 CustomerVerification verificationObject = otpService.GenerateAndSend(otpParams, payloads, client);
@@ -516,6 +510,7 @@ public class CustomerService {
                 }
 
                 boolean match = passwordEncoder.matches(authDto.getPassword(), client.getPassword());
+
                 if (!match) {
                     ClientVerification verify = ClientVerification.builder()
                             .subscriptions(client)
@@ -560,31 +555,23 @@ public class CustomerService {
                     throw new UnauthorizedUserException("contact verification wrong");
                 }
 
-                clientDto.setSecurityQuestionCounts(clientSecurityQuestionRepository.countBySubscriptions(client));
 
-                if (config.getMinSecurityQuest() > 0) {
-                    if (clientDto.getSecurityQuestionCounts() < config.getMinSecurityQuest()) {
-                        throw new UnauthorizedUserException("security questions not available");
-                    }
+                if(clientDevice.isPresent()) {
+                    clientDevice.get().setLastLoginTime(LocalDateTime.now());
+                    clientDeviceRepository.save(clientDevice.get());
+                } else {
+                    ClientDevice device = ClientDeviceDto.mapToEntity(headerDevice);
+                    device.setId(deviceId);
+                    device.setLastLoginTime(LocalDateTime.now());
+                    device.setIpAddress(ip(request));
+                    clientDeviceRepository.save(device);
                 }
 
+                jwtToken = jwtService.generateTokenForClient(client);
+                institutionConfigService.archiveClientVerifications(client, VerificationType.USER);
 
-                    if(clientDevice.isPresent()) {
-                        clientDevice.get().setLastLoginTime(LocalDateTime.now());
-                        clientDeviceRepository.save(clientDevice.get());
-                    } else {
-                        ClientDevice newDevice = ClientDeviceDto.mapToEntity(headerDevice);
-                        ClientDeviceId newDeviceId = new ClientDeviceId(client, headerDevice.getDeviceId(), headerDevice.getDeviceToken());
-                        newDevice.setId(newDeviceId);
-                        newDevice.setIpAddress(ip(request));
-                        clientDeviceRepository.save(newDevice);
-                    }
-
-                    jwtToken = jwtService.generateTokenForClient(client);
-                    institutionConfigService.archiveClientVerifications(client, VerificationType.USER);
-
-                    System.out.println("Exit3 >> Authentication Function");
-                    return new AuthResponse<>(clientDto, jwtToken);
+                System.out.println("Exit3 >> Authentication Function");
+                return new AuthResponse<>(clientDto, jwtToken);
             }
         } catch (FailedSecurityVerification e) {
             throw e;
@@ -779,16 +766,20 @@ public class CustomerService {
         } catch (IllegalArgumentException e) {
             throw new ValidationException(e.getMessage());
         }
+
         Optional<ClientVerification> clientVerification = clientVerificationRepository.findByUuid(guid);
         if (clientVerification.isEmpty()) {
-            throw new ValidationException("fialed_Login 1");
+            throw new ValidationException("Unauthorized");
         }
+
         if (!clientVerification.get().isVerified()) {
-            throw new ValidationException("fialed_Login 2");
+            throw new ValidationException("Unauthorized");
         }
+
         if (!clientVerification.get().getVerificationType().name().equals(VerificationType.OTP.name())) {
-            throw new ValidationException("fialed_Login 3");
+            throw new ValidationException("Unauthorized");
         }
+
         if (clientVerification.get().getCreatedAt().plusMinutes(5L).isBefore(LocalDateTime.now())) {
             throw new ValidationException("your session expired!");
         }
@@ -804,28 +795,27 @@ public class CustomerService {
 
         Optional<ClientDevice> clientDevice = clientDeviceRepository.findById(deviceId);
 
+        if(clientDevice.isEmpty()) {
+            throw  new UnauthorizedUserException("");
+        }
+
         if (config.isVerifyDevice()) {
-            if(clientDevice.isEmpty()) {
-                    throw  new UnauthorizedUserException("");
-            }
             if(!clientDevice.get().getIsActive() || !clientDevice.get().getIsTrusted()) {
                 throw new UnauthorizedUserException("");
             }
         }
 
-
         if (subscriber.getPassword() == null || subscriber.getPassword().isEmpty() || subscriber.getPassword().isBlank())
             throw new UnauthorizedUserException("");
-        Optional<Client> matricul = clientMatriculRepository.findById(subscriber.getClientMatricul());
+        Optional<Client> clientMatricul = clientMatriculRepository.findById(subscriber.getClientMatricul());
 
-        if (matricul.isEmpty()) {
-            throw new UnauthorizedUserException("User does not Exist");
+        if (clientMatricul.isEmpty()) {
+            throw new UnauthorizedUserException("Unauthorized");
         }
 
-        if (!subscriber.getStatus().equals("ACTIVE"))
-            throw new ValidationException("the account is " + subscriber.getStatus());
+        if (!subscriber.getStatus().equals("ACTIVE")) throw new ValidationException("the account is " + subscriber.getStatus());
 
-        subscriber.setClient(matricul.get());
+        subscriber.setClient(clientMatricul.get());
         subscriber.setPins(passwordEncoder.encode(dto.getPin()));
         subscriptionRepository.save(subscriber);
         institutionConfigService.archiveClientVerifications(subscriber, VerificationType.OTP);
@@ -833,51 +823,57 @@ public class CustomerService {
 
         var result = UserDto.CreateSubscriberClientDto.modelToDao(subscriber);
 
-        if(clientDevice.isEmpty()) {
-            ClientDevice newDevice = ClientDeviceDto.mapToEntity(headerDevice);
-            newDevice.setIpAddress(ip(request));
-            ClientDeviceId newDeviceId = new ClientDeviceId(subscriber, headerDevice.getDeviceId(), headerDevice.getDeviceToken());
-            newDevice.setId(newDeviceId);
-        } else {
-            clientDevice.get().setLastLoginTime(LocalDateTime.now());
-            clientDevice.get().setIsActive(true);
-            clientDevice.get().setIsTrusted(true);
-            ClientDeviceId newDeviceId = new ClientDeviceId(subscriber, headerDevice.getDeviceId(), headerDevice.getDeviceToken());
-            clientDevice.get().setId(newDeviceId);
-            clientDeviceRepository.save(clientDevice.get());
-        }
+
+        clientDevice.get().setLastLoginTime(LocalDateTime.now());
+        clientDevice.get().setIsActive(true);
+        clientDevice.get().setIsTrusted(true);
+        ClientDeviceId newDeviceId = new ClientDeviceId(subscriber, headerDevice.getDeviceId(), headerDevice.getDeviceToken());
+        clientDevice.get().setId(newDeviceId);
+        clientDeviceRepository.save(clientDevice.get());
+
         return new AuthResponse<>(result, jwtToken);
     }
 
     @Transactional
-    public String setPassword(String guid, ForgotPasswordDto pass) throws ValidationException {
+    public String setPassword(String guid, ForgotPasswordDto pass, HttpServletRequest request) throws ValidationException, JsonProcessingException {
+
 
         boolean passwordMatch = pass.getNewPassword().matches(pass.getConfirmPassword());
+        if (!passwordMatch) {
+            throw new ValidationException("Password does not match.");
+        }
         PasswordConstraintValidator.isAcceptablePassword(pass.getNewPassword());
         Optional<ClientVerification> clientVerification = clientVerificationRepository.findByUuid(guid);
 
         if (clientVerification.isEmpty()) {
-            throw new ValidationException("failed_Login 1");
+            throw new ValidationException("Unauthorized");
         }
         if (!clientVerification.get().isVerified()) {
-            throw new ValidationException("failed_Login 2");
+            throw new ValidationException("Unauthorized");
         }
-        if (clientVerification.get().getVerificationType().name() != VerificationType.OTP.name()) {
-            throw new ValidationException("failed_Login 3");
+        if (!clientVerification.get().getVerificationType().name().equals(VerificationType.OTP.name())) {
+            throw new ValidationException("Unauthorized");
         }
         if (clientVerification.get().getCreatedAt().plusMinutes(5L).isBefore(LocalDateTime.now())) {
-            throw new ValidationException("failed_Login 4");
+            throw new ValidationException("Unauthorized");
         }
 
-        if (!passwordMatch) {
-            throw new ValidationException("Password does not match.");
-        }
         Subscriptions subscriber = clientVerification.get().getSubscriptions();
 
-        if (!Objects.equals(subscriber.getPasswordResetRequest(), "ALLOW")) {
-            throw new ValidationException("failed_Login 5 " + subscriber.getPasswordResetRequest());
-        }
+        String deviceHeader = request.getHeader("W");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ClientDeviceDto headerDevice = objectMapper.readValue(deviceHeader, ClientDeviceDto.class);
 
+        ClientDeviceId deviceId = new ClientDeviceId(subscriber, headerDevice.getDeviceId(), headerDevice.getDeviceToken());
+        Optional<ClientDevice> clientDevice = clientDeviceRepository.findById(deviceId);
+
+        if(clientDevice.isEmpty()) throw new ValidationException("Unauthorized");
+
+
+
+        if (!Objects.equals(subscriber.getPasswordResetRequest(), "ALLOW")) {
+            throw new ValidationException("Unauthorized" + subscriber.getPasswordResetRequest());
+        }
 
         boolean isOldPassword = this.isPasswordReused(subscriber, pass.getConfirmPassword());
         if (isOldPassword) throw new ValidationException("new password cannot be same as old password");
@@ -892,6 +888,9 @@ public class CustomerService {
         passwordHistory.setPassword(passwordEncoder.encode(pass.getConfirmPassword()));
         passwordHistory.setSubscriber(subscriber);
         this.auditClientPasswordRepository.save(passwordHistory);
+
+        clientDevice.get().setIsTrusted(true);
+        clientDeviceRepository.save(clientDevice.get());
 
         return "success";
     }
