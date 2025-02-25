@@ -1,4 +1,4 @@
-package ibnk.tools.nexaConfig;
+package ibnk.intergrations.nexaConfig;
 
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;

@@ -11,11 +11,8 @@ import ibnk.dto.SubscriptionDao;
 import ibnk.dto.UserDto;
 import ibnk.dto.auth.*;
 import ibnk.intergrations.BetaSms.BetaSmsService;
-import ibnk.intergrations.BetaSms.ResponseDto.BetaResponse;
 import ibnk.intergrations.Tranzak.TranzakService;
-import ibnk.intergrations.Tranzak.requestDtos.InitiateCollection;
 import ibnk.intergrations.Tranzak.requestDtos.PaymentCallbackDto;
-import ibnk.intergrations.Tranzak.responseDtos.InitiateCollectionResponse;
 
 import ibnk.models.internet.InstitutionConfig;
 import ibnk.models.internet.Media;
@@ -24,7 +21,6 @@ import ibnk.models.internet.client.ClientRequest;
 import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.enums.OtpEnum;
 import ibnk.models.internet.enums.Status;
-import ibnk.models.rptBanking.RptLogoEntity;
 import ibnk.repositories.rptBanking.RptLogoRepository;
 import ibnk.service.*;
 import ibnk.service.BankingService.MobilePaymentService;
@@ -33,7 +29,7 @@ import ibnk.tools.Interceptors.InterceptQuestions;
 import ibnk.tools.ResponseHandler;
 import ibnk.tools.TOOLS;
 import ibnk.tools.error.*;
-import ibnk.tools.nexaConfig.EmailService;
+import ibnk.intergrations.EmailService;
 import ibnk.tools.response.AuthResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -55,10 +51,7 @@ import java.nio.file.Files;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static ibnk.webController.client.TransactionController.generateUniqueReference;
 
 @RequiredArgsConstructor
 @RestController

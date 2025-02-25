@@ -1,4 +1,4 @@
-package ibnk.tools.jwtConfig;
+package ibnk.configs;
 
 import ibnk.tools.Interceptors.DeviceInterceptor;
 import ibnk.tools.Interceptors.PinInterceptor;

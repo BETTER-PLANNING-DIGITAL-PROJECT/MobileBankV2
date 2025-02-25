@@ -15,7 +15,7 @@ import ibnk.models.internet.client.Subscriptions;
 import ibnk.service.InstitutionConfigService;
 import ibnk.tools.error.ResourceNotFoundException;
 import ibnk.tools.error.ValidationException;
-import ibnk.tools.jwtConfig.JwtService;
+import ibnk.security.jwtConfig.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

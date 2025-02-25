@@ -1,9 +1,8 @@
-package ibnk.tools.jwtConfig;
+package ibnk.security.jwtConfig;
 
 import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.UserEntity;
 import ibnk.tools.response.TokenResponse;
-import ibnk.tools.security.SecuritySubscriptionService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;

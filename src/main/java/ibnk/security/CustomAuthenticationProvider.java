@@ -1,13 +1,8 @@
-package ibnk.tools.security;
+package ibnk.security;
 
-import ibnk.models.banking.Client;
 import ibnk.models.internet.UserEntity;
 import ibnk.models.internet.client.Subscriptions;
-import ibnk.models.internet.enums.Status;
-import ibnk.models.internet.enums.SubscriberStatus;
-import ibnk.repositories.banking.ClientMatriculRepository;
 import ibnk.tools.error.FailedLoginException;
-import ibnk.tools.error.UnauthorizedUserException;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;

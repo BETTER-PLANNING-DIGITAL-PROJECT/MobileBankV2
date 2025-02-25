@@ -1,8 +1,9 @@
-package ibnk.tools.jwtConfig;
+package ibnk.configs;
 
-import ibnk.tools.security.CustomAuthenticationProvider;
-import ibnk.tools.security.SecuritySubscriptionService;
-import ibnk.tools.security.SecurityUserService;
+import ibnk.security.CustomAuthenticationProvider;
+import ibnk.security.SecuritySubscriptionService;
+import ibnk.security.SecurityUserService;
+import ibnk.security.jwtConfig.JwtTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.MessageSource;

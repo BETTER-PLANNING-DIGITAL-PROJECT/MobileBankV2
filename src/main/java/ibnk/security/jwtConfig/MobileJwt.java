@@ -1,4 +1,4 @@
-package ibnk.tools.jwtConfig;
+package ibnk.security.jwtConfig;
 
 import java.io.File;
 import java.io.FileReader;

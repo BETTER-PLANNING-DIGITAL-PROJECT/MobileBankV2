@@ -1,8 +1,7 @@
-package ibnk.tools.security;
+package ibnk.security;
 
 import ibnk.models.banking.Employee;
 import ibnk.models.internet.UserEntity;
-import ibnk.repositories.banking.ClientMatriculRepository;
 import ibnk.repositories.banking.EmployeeRepository;
 import ibnk.repositories.internet.UserRepository;
 import ibnk.tools.error.ResourceNotFoundException;

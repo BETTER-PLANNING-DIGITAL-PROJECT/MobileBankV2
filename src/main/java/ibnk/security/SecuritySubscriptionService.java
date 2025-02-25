@@ -1,4 +1,4 @@
-package ibnk.tools.security;
+package ibnk.security;
 
 import ibnk.dto.auth.CustomerVerification;
 import ibnk.models.banking.Client;
@@ -8,13 +8,10 @@ import ibnk.models.internet.client.Subscriptions;
 import ibnk.models.internet.enums.Status;
 import ibnk.models.internet.enums.SubscriberStatus;
 import ibnk.models.internet.enums.VerificationType;
-import ibnk.models.internet.security.AuditLogin;
 import ibnk.repositories.banking.ClientMatriculRepository;
 import ibnk.repositories.internet.ClientVerificationRepository;
 import ibnk.repositories.internet.InstitutionConfigRepository;
 import ibnk.repositories.internet.SubscriptionRepository;
-import ibnk.service.InstitutionConfigService;
-import ibnk.tools.error.UnauthorizedUserException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;

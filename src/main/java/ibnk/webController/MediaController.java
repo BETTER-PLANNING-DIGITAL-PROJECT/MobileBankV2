@@ -5,7 +5,7 @@ import ibnk.models.internet.enums.MediaType;
 import ibnk.service.MediaService;
 import ibnk.tools.ResponseHandler;
 import ibnk.tools.TOOLS;
-import ibnk.tools.nexaConfig.EmailService;
+import ibnk.intergrations.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

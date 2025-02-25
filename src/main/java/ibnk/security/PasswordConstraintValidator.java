@@ -1,4 +1,4 @@
-package ibnk.tools.security;
+package ibnk.security;
 
 import ibnk.tools.error.UnauthorizedUserException;
 import ibnk.tools.error.ValidationException;

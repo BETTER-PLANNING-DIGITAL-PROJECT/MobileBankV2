@@ -3,10 +3,6 @@ package ibnk.intergrations.BetaSms;
 
 import ibnk.intergrations.BetaSms.ResponseDto.BetaResponse;
 
-import ibnk.intergrations.Tranzak.TranzakService;
-import ibnk.service.InstitutionConfigService;
-import ibnk.tools.jwtConfig.JwtService;
-import ibnk.tools.nexaConfig.NexaResponse;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;

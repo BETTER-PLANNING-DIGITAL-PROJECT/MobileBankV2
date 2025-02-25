@@ -1,11 +1,10 @@
 package ibnk.tools;
 
 import ibnk.models.internet.client.Subscriptions;
-import ibnk.tools.jwtConfig.MobileJwt;
+import ibnk.security.jwtConfig.MobileJwt;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
-import org.apache.ibatis.javassist.expr.NewArray;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

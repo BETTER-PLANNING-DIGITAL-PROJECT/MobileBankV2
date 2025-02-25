@@ -23,9 +23,9 @@ import ibnk.repositories.internet.*;
 import ibnk.service.BankingService.AccountService;
 import ibnk.tools.TOOLS;
 import ibnk.tools.error.*;
-import ibnk.tools.jwtConfig.JwtService;
+import ibnk.security.jwtConfig.JwtService;
 import ibnk.tools.response.AuthResponse;
-import ibnk.tools.security.PasswordConstraintValidator;
+import ibnk.security.PasswordConstraintValidator;
 import jakarta.annotation.PostConstruct;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -53,8 +53,6 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
-
-import static org.bouncycastle.crypto.tls.ConnectionEnd.client;
 
 @RequiredArgsConstructor
 @Service

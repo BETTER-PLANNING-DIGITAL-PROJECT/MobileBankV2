@@ -1,4 +1,4 @@
-package ibnk.tools.jwtConfig;
+package ibnk.security.jwtConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ibnk.dto.ClientDeviceDto;
@@ -14,8 +14,8 @@ import ibnk.repositories.banking.ClientMatriculRepository;
 import ibnk.repositories.internet.ClientDeviceRepository;
 import ibnk.service.InstitutionConfigService;
 import ibnk.tools.error.UnauthorizedUserException;
-import ibnk.tools.security.SecuritySubscriptionService;
-import ibnk.tools.security.SecurityUserService;
+import ibnk.security.SecuritySubscriptionService;
+import ibnk.security.SecurityUserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;

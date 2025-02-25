@@ -1,30 +1,23 @@
 package ibnk.tools;
 
 import ibnk.dto.BankingDto.AccountMvtDto;
-import ibnk.dto.BankingDto.PaymentDto;
 import ibnk.dto.BankingDto.TransferModel.AccountCallback;
 import ibnk.dto.BankingDto.TransferModel.MobilePayment;
 import ibnk.models.internet.NotificationTemplate;
 import ibnk.models.internet.client.ClientConfig;
 import ibnk.models.internet.client.Subscriptions;
-import ibnk.repositories.banking.MobilePaymentRepository;
 import ibnk.repositories.internet.NotificationTemplateRepository;
 import ibnk.repositories.internet.SubscriptionRepository;
-import ibnk.service.BankingService.AccountService;
 import ibnk.service.BankingService.MobilePaymentService;
-import ibnk.service.BankingService.PaymentService;
 import ibnk.tools.error.ResourceNotFoundException;
-import ibnk.tools.nexaConfig.EmailService;
+import ibnk.intergrations.EmailService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 
 import java.sql.SQLException;
-import java.text.BreakIterator;
 import java.text.SimpleDateFormat;
 import java.util.*;
 

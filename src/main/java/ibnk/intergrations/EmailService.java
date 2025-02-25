@@ -1,4 +1,4 @@
-package ibnk.tools.nexaConfig;
+package ibnk.intergrations;
 
 import ibnk.dto.NotificationEvent;
 import ibnk.intergrations.BetaSms.BetaSmsService;
