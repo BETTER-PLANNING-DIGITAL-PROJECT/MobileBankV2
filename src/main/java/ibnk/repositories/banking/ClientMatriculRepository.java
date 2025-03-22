@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -37,6 +38,6 @@ public interface ClientMatriculRepository extends JpaRepository<Client, String> 
           AND c.passwordmb = HASHBYTES('MD5', CAST(:password AS VARCHAR))
     """, nativeQuery = true)
     int verifyPasswordAndClient(@Param("client") String client, @Param("password") String password);
-    Optional<Client> findByPhoneNumber(String numb);
+    Optional<Client> findByPhoneNumber (String numb);
 }
 

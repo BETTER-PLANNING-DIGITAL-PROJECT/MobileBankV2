@@ -86,8 +86,14 @@ public class ClientAuthController {
                                                  @Valid @RequestBody AuthDto auth,
                                                  @CookieValue(value = "user-device-cookie", required = false) String deviceCookie,
                                                  @RequestHeader(value = "User-Agent") String device) throws UnauthorizedUserException, JsonProcessingException {
-        AuthResponse<Object, Object> resource = customerService.authenticate(auth,request);
+        AuthResponse<Object, Object> resource = customerService.authenticate(auth, request);
         return ResponseHandler.generateResponse(HttpStatus.OK, true, "Success", resource);
+    }
+
+    @GetMapping("auth/sub-details/{contact}")
+    public ResponseEntity<Object> getSubClient(@PathVariable String contact) throws ResourceNotFoundException {
+        UserDto.CreateSubscriberClientDto result = customerService.ClientDetails(contact);
+        return ResponseHandler.generateResponse(HttpStatus.OK, false, "Success", result);
     }
 
     @PostMapping("auth/subscribe")

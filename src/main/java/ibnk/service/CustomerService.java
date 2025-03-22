@@ -256,6 +256,18 @@ public class CustomerService {
         return new AuthResponse<>(clientDto, verificationObject);
     }
 
+    public UserDto.CreateSubscriberClientDto ClientDetails(String contact) throws ResourceNotFoundException {
+
+      Client client =  clientMatriculRepository.findByPhoneNumber(contact).orElse(null);
+      if(client ==null){
+          throw new ResourceNotFoundException("customer-does-not-exist");
+      }
+      Subscriptions subscriptions =  subscriptionRepository.findByClientMatricul(client.getClientId()).orElse(null);
+        if(subscriptions ==null){
+            throw new ResourceNotFoundException("customer-not-subscribed");
+        }
+        return UserDto.CreateSubscriberClientDto.modelToDao(subscriptions);
+    }
     private AccountEntityDto getAccountInfo(String accountId) throws ResourceNotFoundException {
         return accountService.findClientAccounts(accountId)
                 .stream()
